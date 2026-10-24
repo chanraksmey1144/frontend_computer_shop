@@ -12,11 +12,47 @@ export function formatMoney(value, currency = 'USD') {
 
 export function formatDate(value) {
   if (!value) return '-';
-  return new Date(value).toLocaleDateString('en-US', {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '-';
+  return date.toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
   });
+}
+
+export function formatDateTime(value) {
+  if (!value) return '-';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '-';
+  return date.toLocaleString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+}
+
+export function formatNumber(value) {
+  const amount = Number(value);
+  if (!Number.isFinite(amount)) return '0';
+  return new Intl.NumberFormat('en-US').format(amount);
+}
+
+export function firstError(errors, field) {
+  const value = errors?.[field];
+  if (!value) return undefined;
+  return Array.isArray(value) ? value[0] : String(value);
+}
+
+export function errorMessage(err, fallback = 'Something went wrong. Please try again.') {
+  const errors = err?.response?.data?.errors;
+  if (errors && typeof errors === 'object') {
+    const first = Object.values(errors).flat().find(Boolean);
+    if (first) return String(first);
+  }
+  return err?.response?.data?.message || err?.message || fallback;
 }
 
 export function slugify(text) {

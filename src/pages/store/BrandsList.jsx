@@ -2,6 +2,7 @@
 import { Link } from 'react-router-dom';
 import { getBrands } from '../../services/brandService';
 import { ImageFallback } from '../../components/common';
+import { fetchAllPages } from '../../utils/apiResponse';
 import { Boxes, ArrowRight } from 'lucide-react';
 
 export default function BrandsList() {
@@ -11,9 +12,9 @@ export default function BrandsList() {
 
   useEffect(() => {
     let cancelled = false;
-    getBrands()
-      .then((res) => {
-        if (!cancelled) setBrands(res.data.data || res.data || []);
+    fetchAllPages(getBrands, { status: 'active' })
+      .then((rows) => {
+        if (!cancelled) setBrands(rows);
       })
       .catch((err) => {
         if (!cancelled) setError(err.message || 'Failed to load brands.');

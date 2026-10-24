@@ -1,6 +1,7 @@
 ﻿import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getCategories } from '../../services/categoryService';
+import { fetchAllPages } from '../../utils/apiResponse';
 import { Laptop, Monitor, Cpu, Keyboard, Headphones, Boxes, ArrowRight } from 'lucide-react';
 
 const ICON_MAP = [
@@ -24,9 +25,9 @@ export default function CategoriesList() {
 
   useEffect(() => {
     let cancelled = false;
-    getCategories()
-      .then((res) => {
-        if (!cancelled) setCategories(res.data.data || res.data || []);
+    fetchAllPages(getCategories, { status: 'active' })
+      .then((rows) => {
+        if (!cancelled) setCategories(rows);
       })
       .catch((err) => {
         if (!cancelled) setError(err.message || 'Failed to load categories.');

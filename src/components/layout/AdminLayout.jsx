@@ -19,6 +19,7 @@ function pageTitle(pathname) {
     '/admin/categories': 'Categories',
     '/admin/brands': 'Brands',
     '/admin/inventory': 'Inventory',
+    '/admin/warehouses': 'Warehouses',
     '/admin/orders': 'Orders',
     '/admin/customers': 'Customers',
     '/admin/reports': 'Reports',

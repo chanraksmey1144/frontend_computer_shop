@@ -23,3 +23,7 @@ export function deleteProduct(id) {
 export function getProductImages(productId) {
   return api.get(`/products/${productId}/images`);
 }
+
+export function getProductVariants(productId, params = {}) {
+  return api.get(`/products/${productId}/variants`, { params });
+}

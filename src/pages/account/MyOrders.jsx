@@ -5,6 +5,7 @@ import { Badge } from '../../components/common';
 import AccountNav from '../../components/account/AccountNav';
 import { formatMoney, formatDate } from '../../utils/format';
 import { Package, PackageSearch, ChevronRight, ShoppingBag } from 'lucide-react';
+import { fetchAllPages } from '../../utils/apiResponse';
 
 export default function MyOrders() {
   const [orders, setOrders] = useState([]);
@@ -13,9 +14,9 @@ export default function MyOrders() {
 
   useEffect(() => {
     let cancelled = false;
-    getOrdersApi()
-      .then((res) => {
-        if (!cancelled) setOrders(res.data.data || res.data || []);
+    fetchAllPages(getOrdersApi)
+      .then((rows) => {
+        if (!cancelled) setOrders(rows);
       })
       .catch((err) => {
         if (!cancelled) setError(err.message || 'Failed to load orders.');

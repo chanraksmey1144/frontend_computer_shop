@@ -2,6 +2,7 @@
 import { Link } from 'react-router-dom';
 import { getCategories } from '../../services/categoryService';
 import { getBrands } from '../../services/brandService';
+import { fetchAllPages } from '../../utils/apiResponse';
 import { ImageFallback } from '../../components/common';
 import {
   Laptop,
@@ -52,13 +53,13 @@ export default function Home() {
     let cancelled = false;
     async function load() {
       try {
-        const [catRes, brandRes] = await Promise.all([
-          getCategories({ status: 'active', root_only: 'true' }),
-          getBrands({ status: 'active' }),
+        const [categoryRows, brandRows] = await Promise.all([
+          fetchAllPages(getCategories, { status: 'active', root_only: 'true' }),
+          fetchAllPages(getBrands, { status: 'active' }),
         ]);
         if (!cancelled) {
-          setCategories(catRes.data.data || catRes.data || []);
-          setBrands(brandRes.data.data || brandRes.data || []);
+          setCategories(categoryRows);
+          setBrands(brandRows);
         }
       } catch (err) {
         if (!cancelled) setError(err.message || 'Failed to load homepage data.');

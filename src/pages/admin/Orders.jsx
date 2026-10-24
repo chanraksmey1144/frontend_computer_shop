@@ -5,6 +5,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '../../components/commo
 import { Badge } from '../../components/common';
 import { Loader } from '../../components/common';
 import { formatMoney, formatDate } from '../../utils/format';
+import { fetchAllPages } from '../../utils/apiResponse';
 
 export default function AdminOrders() {
   const [orders, setOrders] = useState([]);
@@ -13,8 +14,8 @@ export default function AdminOrders() {
 
   useEffect(() => {
     let cancelled = false;
-    getAdminOrders()
-      .then((res) => { if (!cancelled) setOrders(res.data.data || res.data || []); })
+    fetchAllPages(getAdminOrders)
+      .then((rows) => { if (!cancelled) setOrders(rows); })
       .catch((err) => { if (!cancelled) setError(err.message || 'Failed to load orders.'); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };

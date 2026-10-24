@@ -1,8 +1,11 @@
 ﻿import { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { getProducts } from '../../services/productService';
+import { getCategories } from '../../services/categoryService';
+import { getBrands } from '../../services/brandService';
 import { Badge, ImageFallback } from '../../components/common';
 import { formatMoney } from '../../utils/format';
+import { fetchAllPages, parseApiCollection } from '../../utils/apiResponse';
 import {
   SearchX,
   SlidersHorizontal,
@@ -13,11 +16,24 @@ import {
 } from 'lucide-react';
 
 const SORTS = [
-  { key: 'featured', label: 'Featured' },
+  { key: 'newest', label: 'Newest' },
   { key: 'price_asc', label: 'Price: Low to High' },
   { key: 'price_desc', label: 'Price: High to Low' },
-  { key: 'newest', label: 'Newest' },
 ];
+
+const catalogPromises = { categories: null, brands: null };
+
+async function getCatalogId(kind, slug) {
+  const service = kind === 'categories' ? getCategories : getBrands;
+  if (!catalogPromises[kind]) {
+    catalogPromises[kind] = fetchAllPages(service, { status: 'active' }).catch((error) => {
+      catalogPromises[kind] = null;
+      throw error;
+    });
+  }
+  const records = await catalogPromises[kind];
+  return records.find((record) => record.slug === slug)?.id ?? null;
+}
 
 export default function ProductList({ initialQuery = {} } = {}) {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -36,17 +52,35 @@ export default function ProductList({ initialQuery = {} } = {}) {
       setLoading(true);
       setError(null);
       try {
+        const [categoryId, brandId] = await Promise.all([
+          query.category
+            ? (/^\d+$/.test(query.category) ? Number(query.category) : getCatalogId('categories', query.category))
+            : Promise.resolve(undefined),
+          query.brand
+            ? (/^\d+$/.test(query.brand) ? Number(query.brand) : getCatalogId('brands', query.brand))
+            : Promise.resolve(undefined),
+        ]);
+
+        if ((query.category && !categoryId) || (query.brand && !brandId)) {
+          if (!cancelled) {
+            setProducts([]);
+            setMeta({});
+          }
+          return;
+        }
+
         const res = await getProducts({
           page,
           search: query.search || undefined,
-          category: query.category || undefined,
-          brand: query.brand || undefined,
+          category_id: categoryId,
+          brand_id: brandId,
           status: query.status || 'active',
-          sort: query.sort || 'featured',
+          sort: query.sort || 'newest',
         });
         if (!cancelled) {
-          setProducts(res.data.data || res.data || []);
-          setMeta(res.data.meta || {});
+          const { items, meta: pageMeta } = parseApiCollection(res);
+          setProducts(items);
+          setMeta(pageMeta);
         }
       } catch (err) {
         if (!cancelled) setError(err.message || 'Failed to load products.');
@@ -90,7 +124,7 @@ export default function ProductList({ initialQuery = {} } = {}) {
             <SlidersHorizontal className="h-4 w-4" /> Sort
           </span>
           <select
-            value={query.sort || 'featured'}
+            value={query.sort || 'newest'}
             onChange={(e) => changeParam('sort', e.target.value)}
             className="h-10 rounded-xl border border-slate-200 bg-white px-3 pr-8 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:border-slate-300 focus:border-brand-400 focus:outline-none focus:ring-4 focus:ring-brand-500/10"
           >
@@ -160,6 +194,12 @@ function ProductCard({ product }) {
   const price = product.price ?? 0;
   const unavailable = product.status !== 'active' || product.stock === 0;
   const brandName = product.brand?.name || (typeof product.brand === 'string' ? product.brand : '');
+  const productImages = Array.isArray(product.images) ? product.images : [];
+  const imageUrl = product.image_url
+    || product.thumbnail
+    || productImages.find((image) => image.is_primary)?.image_url
+    || productImages[0]?.image_url
+    || null;
 
   return (
     <Link
@@ -168,7 +208,7 @@ function ProductCard({ product }) {
     >
       <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
         <ImageFallback
-          src={product.image_url || product.thumbnail || null}
+          src={imageUrl}
           alt={product.name || 'Product'}
           className="h-full w-full transition-transform duration-500 group-hover:scale-105"
         />

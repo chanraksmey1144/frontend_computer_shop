@@ -5,6 +5,7 @@ export { default as ProductEdit } from './ProductEdit';
 export { default as Categories } from './Categories';
 export { default as Brands } from './Brands';
 export { default as Inventory } from './Inventory';
+export { default as Warehouses } from './Warehouses';
 export { default as Orders } from './Orders';
 export { default as OrderDetail } from './OrderDetail';
 export { default as Customers } from './Customers';

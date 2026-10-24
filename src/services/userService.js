@@ -1,7 +1,7 @@
 import api from './api';
 
-export function getAddresses() {
-  return api.get('/user/addresses');
+export function getAddresses(params = {}) {
+  return api.get('/user/addresses', { params });
 }
 
 export function createAddress(data) {

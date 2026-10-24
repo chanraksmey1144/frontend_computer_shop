@@ -11,6 +11,8 @@ export default function Input({
   placeholder,
   disabled = false,
   error,
+  hint,
+  rightSlot,
   required = false,
   className = '',
   ...props
@@ -27,31 +29,44 @@ export default function Input({
           )}
         </label>
       )}
-      <input
-        id={id}
-        type={type}
-        value={value}
-        defaultValue={defaultValue}
-        onChange={onChange}
-        onBlur={onBlur}
-        placeholder={placeholder}
-        disabled={disabled}
-        required={required}
-        aria-invalid={error ? 'true' : 'false'}
-        aria-required={required}
-        className={cn(
-          'block h-11 w-full rounded-xl border bg-white px-3.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 transition-colors focus:outline-none focus:ring-4 disabled:bg-slate-50 disabled:text-slate-500',
-          error
-            ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-500/15'
-            : 'border-slate-200 hover:border-slate-300 focus:border-brand-500 focus:ring-brand-500/15',
-          className
+      <div className="relative">
+        <input
+          id={id}
+          type={type}
+          value={value}
+          defaultValue={defaultValue}
+          onChange={onChange}
+          onBlur={onBlur}
+          placeholder={placeholder}
+          disabled={disabled}
+          required={required}
+          aria-invalid={error ? 'true' : 'false'}
+          aria-required={required}
+          aria-describedby={hint && !error ? `${id}-hint` : undefined}
+          className={cn(
+            'block h-11 w-full rounded-xl border bg-white px-3.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 transition-colors focus:outline-none focus:ring-4 disabled:bg-slate-50 disabled:text-slate-500',
+            rightSlot && 'pr-11',
+            error
+              ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-500/15'
+              : 'border-slate-200 hover:border-slate-300 focus:border-brand-500 focus:ring-brand-500/15',
+            className
+          )}
+          {...props}
+        />
+        {rightSlot && (
+          <div className="absolute inset-y-0 right-2 flex items-center">{rightSlot}</div>
         )}
-        {...props}
-      />
-      {error && (
+      </div>
+      {error ? (
         <p className="text-xs font-medium text-rose-600" role="alert">
           {error}
         </p>
+      ) : (
+        hint && (
+          <p id={id ? `${id}-hint` : undefined} className="text-xs text-slate-400">
+            {hint}
+          </p>
+        )
       )}
     </div>
   );

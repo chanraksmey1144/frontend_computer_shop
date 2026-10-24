@@ -23,7 +23,6 @@ import BrandPage from '../pages/store/BrandPage';
 import Search from '../pages/store/Search';
 import Cart from '../pages/store/Cart';
 import Checkout from '../pages/store/Checkout';
-import NotFound from '../pages/store/NotFound';
 
 // Auth
 import Login from '../pages/auth/Login';
@@ -47,6 +46,7 @@ import ProductEdit from '../pages/admin/ProductEdit';
 import AdminCategories from '../pages/admin/Categories';
 import AdminBrands from '../pages/admin/Brands';
 import Inventory from '../pages/admin/Inventory';
+import AdminWarehouses from '../pages/admin/Warehouses';
 import AdminOrders from '../pages/admin/Orders';
 import AdminOrderDetail from '../pages/admin/OrderDetail';
 import Customers from '../pages/admin/Customers';
@@ -79,6 +79,7 @@ export default function App() {
                 <Route path="search" element={<Search />} />
                 <Route path="cart" element={<Cart />} />
                 <Route path="checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
+                <Route path="home" element={<Navigate to="/" replace />} />
 
                 {/* Account (protected) */}
                 <Route path="profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
@@ -104,14 +105,16 @@ export default function App() {
                 <Route path="categories" element={<AdminCategories />} />
                 <Route path="brands" element={<AdminBrands />} />
                 <Route path="inventory" element={<Inventory />} />
+                <Route path="warehouses" element={<AdminWarehouses />} />
                 <Route path="orders" element={<AdminOrders />} />
                 <Route path="orders/:id" element={<AdminOrderDetail />} />
                 <Route path="customers" element={<Customers />} />
                 <Route path="reports" element={<Reports />} />
                 <Route path="settings" element={<Settings />} />
+                <Route path="*" element={<Navigate to="/admin" replace />} />
               </Route>
 
-              <Route path="*" element={<NotFound />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </BrowserRouter>
         </CartProvider>

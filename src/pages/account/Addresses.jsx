@@ -9,6 +9,7 @@ import { Button, ConfirmDialog, Input, Badge } from '../../components/common';
 import Modal from '../../components/common/Modal';
 import AccountNav from '../../components/account/AccountNav';
 import { MapPin, Plus, Trash2, Home } from 'lucide-react';
+import { fetchAllPages } from '../../utils/apiResponse';
 
 const EMPTY_FORM = {
   recipient_name: '',
@@ -34,9 +35,9 @@ export default function Addresses() {
 
   useEffect(() => {
     let cancelled = false;
-    getAddressesApi()
-      .then((res) => {
-        if (!cancelled) setAddresses(res.data.data || res.data || []);
+    fetchAllPages(getAddressesApi)
+      .then((rows) => {
+        if (!cancelled) setAddresses(rows);
       })
       .catch(() => {
         if (!cancelled) setError('Failed to load addresses.');
@@ -56,8 +57,7 @@ export default function Addresses() {
       await createAddressApi(form);
       setOpen(false);
       setForm(EMPTY_FORM);
-      const res = await getAddressesApi();
-      setAddresses(res.data.data || res.data || []);
+      setAddresses(await fetchAllPages(getAddressesApi));
       show({ title: 'Address saved', type: 'success' });
     } catch (err) {
       show({

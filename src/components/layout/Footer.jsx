@@ -18,30 +18,27 @@ const COLUMNS = [
     title: 'Shop',
     links: [
       { label: 'All products', to: '/products' },
-      { label: 'Laptops', to: '/categories/laptops' },
-      { label: 'Desktops', to: '/categories/desktops' },
-      { label: 'Monitors', to: '/categories/monitors' },
-      { label: 'Accessories', to: '/categories/accessories' },
+      { label: 'Categories', to: '/categories' },
       { label: 'Brands', to: '/brands' },
+      { label: 'Search', to: '/search' },
+      { label: 'Shopping cart', to: '/cart' },
     ],
   },
   {
-    title: 'Support',
+    title: 'Customer care',
     links: [
-      { label: 'Contact us', to: '/contact' },
-      { label: 'Warranty', to: '/warranty' },
-      { label: 'Delivery', to: '/delivery' },
-      { label: 'Returns', to: '/returns' },
-      { label: 'FAQ', to: '/faq' },
+      { label: 'My orders', to: '/my-orders' },
+      { label: 'My account', to: '/profile' },
+      { label: 'Addresses', to: '/addresses' },
+      { label: 'Account settings', to: '/account/settings' },
     ],
   },
   {
     title: 'Company',
     links: [
-      { label: 'About us', to: '/about' },
-      { label: 'Careers', to: '/careers' },
-      { label: 'Privacy policy', to: '/privacy' },
-      { label: 'Terms of service', to: '/terms' },
+      { label: 'About us', to: '/products' },
+      { label: 'Privacy policy', to: '/products' },
+      { label: 'Terms of service', to: '/products' },
     ],
   },
 ];
@@ -62,12 +59,12 @@ export default function Footer() {
           <div>
             <h3 className="text-2xl font-bold text-white">Stay ahead of the curve</h3>
             <p className="mt-2 max-w-md text-sm text-slate-400">
-              Join our newsletter for new arrivals, exclusive deals and expert buying guides.
+              Get product launches, build guides and exclusive deals in your inbox.
             </p>
           </div>
           <form
             onSubmit={(e) => e.preventDefault()}
-            className="flex w-full max-w-md gap-2 lg:ml-auto"
+            className="flex w-full max-w-md flex-col gap-2 sm:flex-row lg:ml-auto"
           >
             <div className="relative flex-1">
               <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
@@ -80,7 +77,7 @@ export default function Footer() {
             </div>
             <button
               type="submit"
-              className="inline-flex h-11 items-center gap-2 rounded-xl bg-brand-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-brand-500"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand-600 px-5 text-sm font-semibold text-white transition-colors hover:bg-brand-500"
             >
               Subscribe <ArrowRight className="h-4 w-4" />
             </button>
@@ -99,8 +96,8 @@ export default function Footer() {
               </span>
             </Link>
             <p className="mt-4 max-w-sm text-sm leading-relaxed text-slate-400">
-              Premium laptops, desktops, monitors and accessories for work, gaming and creativity —
-              trusted by customers across Cambodia.
+              Premium laptops, desktops, monitors, components and accessories for work, gaming and
+              creativity — trusted by customers across Cambodia.
             </p>
             <ul className="mt-6 space-y-2.5 text-sm">
               <li className="flex items-center gap-2.5">

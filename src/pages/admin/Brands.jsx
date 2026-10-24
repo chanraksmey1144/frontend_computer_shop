@@ -7,6 +7,7 @@ import { Input } from '../../components/common';
 import { Badge } from '../../components/common';
 import { ConfirmDialog } from '../../components/common';
 import { ImageFallback } from '../../components/common';
+import { fetchAllPages } from '../../utils/apiResponse';
 
 export default function AdminBrands() {
   const [brands, setBrands] = useState([]);
@@ -21,8 +22,8 @@ export default function AdminBrands() {
 
   useEffect(() => {
     let cancelled = false;
-    getBrands()
-      .then((res) => { if (!cancelled) setBrands(res.data.data || res.data || []); })
+    fetchAllPages(getBrands)
+      .then((rows) => { if (!cancelled) setBrands(rows); })
       .catch((err) => { if (!cancelled) setError(err.message || 'Failed to load brands.'); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
@@ -46,8 +47,7 @@ export default function AdminBrands() {
       await createBrand(form);
       setOpen(false);
       setForm({ name: '', slug: '', logo_url: '', description: '', status: 'active' });
-      const res = await getBrands();
-      setBrands(res.data.data || res.data || []);
+      setBrands(await fetchAllPages(getBrands));
       show({ title: 'Brand created', type: 'success' });
     } catch (err) {
       if (err.response && err.response.status === 422) {

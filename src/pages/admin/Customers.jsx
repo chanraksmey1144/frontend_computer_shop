@@ -5,6 +5,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '../../components/commo
 import { Badge } from '../../components/common';
 import { Loader } from '../../components/common';
 import { formatDate } from '../../utils/format';
+import { fetchAllPages } from '../../utils/apiResponse';
 
 export default function AdminCustomers() {
   const [customers, setCustomers] = useState([]);
@@ -13,8 +14,8 @@ export default function AdminCustomers() {
 
   useEffect(() => {
     let cancelled = false;
-    getAdminCustomers()
-      .then((res) => { if (!cancelled) setCustomers(res.data.data || res.data || []); })
+    fetchAllPages(getAdminCustomers)
+      .then((rows) => { if (!cancelled) setCustomers(rows); })
       .catch((err) => { if (!cancelled) setError(err.message || 'Failed to load customers.'); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };

@@ -6,6 +6,7 @@ import { Button } from '../../components/common';
 import { Input } from '../../components/common';
 import { Badge } from '../../components/common';
 import { ConfirmDialog } from '../../components/common';
+import { fetchAllPages } from '../../utils/apiResponse';
 
 export default function AdminCategories() {
   const [categories, setCategories] = useState([]);
@@ -20,8 +21,8 @@ export default function AdminCategories() {
 
   useEffect(() => {
     let cancelled = false;
-    getCategories()
-      .then((res) => { if (!cancelled) setCategories(res.data.data || res.data || []); })
+    fetchAllPages(getCategories)
+      .then((rows) => { if (!cancelled) setCategories(rows); })
       .catch((err) => { if (!cancelled) setError(err.message || 'Failed to load categories.'); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
@@ -45,8 +46,7 @@ export default function AdminCategories() {
       await createCategory(form);
       setOpen(false);
       setForm({ parent_id: '', name: '', slug: '', description: '', image: '', status: 'active' });
-      const res = await getCategories();
-      setCategories(res.data.data || res.data || []);
+      setCategories(await fetchAllPages(getCategories));
       show({ title: 'Category created', type: 'success' });
     } catch (err) {
       if (err.response && err.response.status === 422) {

@@ -1,10 +1,11 @@
 ﻿import { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { getProduct } from '../../services/productService';
+import { getProduct, getProductImages } from '../../services/productService';
 import { useCart } from '../../context/CartContext';
 import { useToast } from '../../components/common';
 import { Badge, Button, ImageFallback } from '../../components/common';
 import { formatMoney } from '../../utils/format';
+import { parseApiCollection } from '../../utils/apiResponse';
 import {
   ChevronRight,
   Minus,
@@ -32,8 +33,15 @@ export default function ProductDetail() {
     async function load() {
       setLoading(true);
       try {
-        const res = await getProduct(id);
-        if (!cancelled) setProduct(res.data.data || res.data);
+        const [productResponse, imageResponse] = await Promise.all([
+          getProduct(id),
+          getProductImages(id).catch(() => null),
+        ]);
+        if (!cancelled) {
+          const product = productResponse.data?.data ?? productResponse.data;
+          const { items: images } = parseApiCollection(imageResponse);
+          setProduct({ ...product, images });
+        }
       } catch (err) {
         if (!cancelled) setError(err.message || 'Failed to load product.');
       } finally {
@@ -68,7 +76,7 @@ export default function ProductDetail() {
 
   const images = product.images || [];
   const gallery = images.length
-    ? images.map((img) => (typeof img === 'string' ? img : img.url)).filter(Boolean)
+    ? images.map((img) => (typeof img === 'string' ? img : img.image_url || img.url)).filter(Boolean)
     : [product.image_url].filter(Boolean);
   const mainImage = gallery[activeImage] || product.image_url || null;
   const unavailable = product.status !== 'active' || product.stock === 0;

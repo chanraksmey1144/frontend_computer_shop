@@ -27,6 +27,7 @@ const GROUPS = [
       { name: 'Categories', icon: Tags, to: '/admin/categories' },
       { name: 'Brands', icon: Boxes, to: '/admin/brands' },
       { name: 'Inventory', icon: BarChart3, to: '/admin/inventory' },
+      { name: 'Warehouses', icon: Store, to: '/admin/warehouses' },
     ],
   },
   {

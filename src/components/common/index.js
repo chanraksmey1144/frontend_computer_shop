@@ -9,3 +9,6 @@ export { default as Modal } from './Modal';
 export { default as ConfirmDialog } from './ConfirmDialog';
 export { ToastProvider, useToast } from './Toast';
 export { default as Avatar } from './Avatar';
+export { default as Breadcrumbs } from './Breadcrumbs';
+export { default as PageHeader } from './PageHeader';
+export { default as EmptyState } from './EmptyState';
