@@ -37,15 +37,24 @@ export default function OtpVerify() {
     setSubmitting(true);
     try {
       await verifyOtpApi(form);
-      show({ title: 'Verified', description: 'Your email has been verified.', type: 'success' });
-      navigate('/login');
+      if (form.purpose === 'password_reset') {
+        show({
+          title: 'Code verified',
+          description: 'Choose a new password to finish resetting your account.',
+          type: 'success',
+        });
+        navigate(`/reset-password?email=${encodeURIComponent(form.destination)}&purpose=password_reset`);
+      } else {
+        show({ title: 'Verified', description: 'Your email has been verified.', type: 'success' });
+        navigate('/login');
+      }
     } catch (err) {
       if (err.response && err.response.status === 422) {
         setErrors(err.response.data.errors || {});
       } else {
         show({
           title: 'Verification failed',
-          description: err.message || 'Invalid OTP.',
+          description: err.response?.data?.message || err.message || 'Invalid OTP.',
           type: 'error',
         });
       }
@@ -63,7 +72,7 @@ export default function OtpVerify() {
     } catch (err) {
       show({
         title: 'Resend failed',
-        description: err.message || 'Unable to send OTP.',
+        description: err.response?.data?.message || err.message || 'Unable to send OTP.',
         type: 'error',
       });
     } finally {
@@ -74,7 +83,9 @@ export default function OtpVerify() {
   return (
     <div>
       <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-600">Verification</p>
-      <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">Verify your email</h1>
+      <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">
+        {form.purpose === 'password_reset' ? 'Verify code to reset password' : 'Verify your email'}
+      </h1>
       <p className="mt-1.5 text-sm text-slate-500">
         Enter the 6-digit code sent to{' '}
         <span className="font-semibold text-slate-700">{form.destination || 'your email'}</span>.

@@ -30,6 +30,7 @@ import Register from '../pages/auth/Register';
 import OtpVerify from '../pages/auth/OtpVerify';
 import ForgotPassword from '../pages/auth/ForgotPassword';
 import ResetPassword from '../pages/auth/ResetPassword';
+import GoogleAuthCallback from '../pages/auth/GoogleAuthCallback';
 
 // Account
 import Profile from '../pages/account/Profile';
@@ -90,6 +91,7 @@ export default function App() {
               </Route>
 
               {/* Auth (redirect if authenticated) */}
+              <Route path="auth/google/callback" element={<GoogleAuthCallback />} />
               <Route path="login" element={<RedirectIfAuthenticated><AuthLayout><Login /></AuthLayout></RedirectIfAuthenticated>} />
               <Route path="register" element={<RedirectIfAuthenticated><AuthLayout><Register /></AuthLayout></RedirectIfAuthenticated>} />
               <Route path="otp/verify" element={<RedirectIfAuthenticated><AuthLayout><OtpVerify /></AuthLayout></RedirectIfAuthenticated>} />

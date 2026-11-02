@@ -1,5 +1,7 @@
 import api, { setAccessToken } from './api';
 
+export const googleLoginUrl = `${api.defaults.baseURL.replace(/\/+$/, '')}/auth/google`;
+
 export function login(credentials) {
   return api.post('/login', credentials);
 }
@@ -14,10 +16,6 @@ export function sendOtp(payload) {
 
 export function verifyOtp(payload) {
   return api.post('/otp/verify', payload);
-}
-
-export function forgotPassword(data) {
-  return api.post('/password/email', data);
 }
 
 export function resetPassword(data) {

@@ -7,11 +7,10 @@ import { ArrowLeft, KeyRound } from 'lucide-react';
 
 export default function ResetPassword() {
   const [searchParams] = useSearchParams();
-  const token = searchParams.get('token') || '';
   const email = searchParams.get('email') || '';
   const navigate = useNavigate();
   const { show } = useToast();
-  const [form, setForm] = useState({ email, token, password: '', password_confirmation: '' });
+  const [form, setForm] = useState({ email, password: '', password_confirmation: '' });
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
 
@@ -26,10 +25,17 @@ export default function ResetPassword() {
     } catch (err) {
       if (err.response && err.response.status === 422) {
         setErrors(err.response.data.errors || {});
+        if (err.response.data.errors?.otp) {
+          show({
+            title: 'Code verification required',
+            description: err.response.data.message || 'Verify a new code and try again.',
+            type: 'error',
+          });
+        }
       } else {
         show({
           title: 'Reset failed',
-          description: err.message || 'Unable to reset password.',
+          description: err.response?.data?.message || err.message || 'Unable to reset password.',
           type: 'error',
         });
       }
@@ -46,10 +52,16 @@ export default function ResetPassword() {
         Choose a strong password you haven't used before.
       </p>
 
-      {!token && (
+      {errors.otp?.[0] && (
+        <div role="alert" className="mt-6 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+          {errors.otp[0]}
+        </div>
+      )}
+
+      {!email && (
         <div className="mt-6 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
           <KeyRound className="mt-0.5 h-4 w-4 shrink-0" />
-          This reset link is missing a token. Request a new link from the forgot password page.
+          Start from the forgot password page and verify the code sent to your email.
         </div>
       )}
 
@@ -77,7 +89,7 @@ export default function ResetPassword() {
           error={errors.password_confirmation}
           required
         />
-        <Button type="submit" size="lg" className="w-full" loading={submitting}>
+        <Button type="submit" size="lg" className="w-full" loading={submitting} disabled={!email}>
           Reset password
         </Button>
       </form>

@@ -45,6 +45,23 @@ export function AuthProvider({ children }) {
     return res;
   };
 
+  const loginWithToken = async (token) => {
+    setAccessToken(token);
+    localStorage.setItem('auth_token', token);
+
+    try {
+      const res = await getProfileApi();
+      const profile = res.data.data || res.data;
+      setUser(profile);
+      return profile;
+    } catch (error) {
+      setUser(null);
+      setAccessToken(null);
+      localStorage.removeItem('auth_token');
+      throw error;
+    }
+  };
+
   const register = async (data) => {
     const res = await registerApi(data);
     const d = res.data.data || res.data;
@@ -70,6 +87,7 @@ export function AuthProvider({ children }) {
     user,
     loading,
     login,
+    loginWithToken,
     register,
     logout,
     isAuthenticated: !!user,

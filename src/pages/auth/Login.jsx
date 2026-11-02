@@ -3,6 +3,7 @@ import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../components/common';
 import { Button, Input } from '../../components/common';
+import { googleLoginUrl } from '../../services/authService';
 
 export default function Login() {
   const { login, isAuthenticated, loading: authLoading } = useAuth();
@@ -90,6 +91,20 @@ export default function Login() {
           Sign in
         </Button>
       </form>
+
+      <div className="my-6 flex items-center gap-3">
+        <span className="h-px flex-1 bg-slate-200" />
+        <span className="text-xs font-medium uppercase tracking-wider text-slate-400">Or continue with</span>
+        <span className="h-px flex-1 bg-slate-200" />
+      </div>
+
+      <a
+        href={googleLoginUrl}
+        className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+      >
+        <span aria-hidden="true" className="font-bold text-brand-600">G</span>
+        Continue with Google
+      </a>
 
       <div className="my-6 flex items-center gap-3">
         <span className="h-px flex-1 bg-slate-200" />
