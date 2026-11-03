@@ -14,7 +14,7 @@ export default function CategoryPage() {
           Browse all products available in the {name} category.
         </p>
       </div>
-      <ProductList initialQuery={{ category: slug }} />
+      <ProductList initialQuery={{ category: slug }} showHeader={false} />
     </div>
   );
 }

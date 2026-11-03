@@ -12,7 +12,7 @@ export default function BrandPage() {
         <h1 className="mt-1.5 text-3xl font-bold tracking-tight text-slate-900">{name}</h1>
         <p className="mt-1 text-sm text-slate-500">Explore genuine {name} products.</p>
       </div>
-      <ProductList initialQuery={{ brand: slug }} />
+      <ProductList initialQuery={{ brand: slug }} showHeader={false} />
     </div>
   );
 }

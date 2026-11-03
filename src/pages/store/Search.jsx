@@ -14,7 +14,7 @@ export default function Search() {
           Results for <span className="font-semibold text-slate-700">“{q}”</span>
         </p>
       </div>
-      <ProductList initialQuery={{ search: q }} />
+      <ProductList initialQuery={{ search: q }} showHeader={false} />
     </div>
   );
 }

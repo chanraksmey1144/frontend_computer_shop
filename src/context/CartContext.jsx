@@ -1,4 +1,5 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+﻿import { createContext, useContext, useEffect, useState } from 'react';
+import { useAuth } from './AuthContext';
 import {
   getCart as getCartApi,
   addToCart as addToCartApi,
@@ -9,21 +10,63 @@ import {
 
 const CartContext = createContext(null);
 
+const EMPTY_CART = {
+  items: [],
+  item_count: 0,
+  subtotal: 0,
+  discount: 0,
+  delivery_fee: 0,
+  total: 0,
+};
+
 export function CartProvider({ children }) {
-  const [cart, setCart] = useState({ items: [], total: 0, item_count: 0 });
+  const { isAuthenticated, loading: authLoading } = useAuth();
+  const [cart, setCart] = useState(EMPTY_CART);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    loadCart();
-  }, []);
+    if (authLoading) return undefined;
+
+    if (!isAuthenticated) {
+      setCart(EMPTY_CART);
+      setLoading(false);
+      return undefined;
+    }
+
+    let cancelled = false;
+
+    async function sync() {
+      setLoading(true);
+      try {
+        const res = await getCartApi();
+        if (!cancelled) {
+          setCart(res.data.data || res.data || EMPTY_CART);
+        }
+      } catch {
+        if (!cancelled) setCart(EMPTY_CART);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    sync();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [authLoading, isAuthenticated]);
 
   async function loadCart() {
+    if (!isAuthenticated) {
+      setCart(EMPTY_CART);
+      return;
+    }
     setLoading(true);
     try {
       const res = await getCartApi();
-      setCart(res.data.data || res.data || { items: [], total: 0, item_count: 0 });
+      setCart(res.data.data || res.data || EMPTY_CART);
     } catch {
-      setCart({ items: [], total: 0, item_count: 0 });
+      setCart(EMPTY_CART);
     } finally {
       setLoading(false);
     }
@@ -49,7 +92,7 @@ export function CartProvider({ children }) {
 
   const clearCart = async () => {
     const res = await clearCartApi();
-    setCart({ items: [], total: 0, item_count: 0 });
+    setCart(EMPTY_CART);
     return res;
   };
 
@@ -61,8 +104,8 @@ export function CartProvider({ children }) {
     removeItem,
     clearCart,
     refresh: loadCart,
-    itemCount: cart.item_count || (cart.items ? cart.items.length : 0),
-    cartTotal: cart.total || 0,
+    itemCount: cart.item_count ?? (cart.items ? cart.items.length : 0),
+    cartTotal: cart.total ?? 0,
   };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

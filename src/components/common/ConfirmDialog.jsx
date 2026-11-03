@@ -1,4 +1,4 @@
-import { Trash2, AlertCircle } from 'lucide-react';
+﻿import { Trash2, AlertCircle } from 'lucide-react';
 import Modal from './Modal';
 import Button from './Button';
 import { cn } from '../../utils/cn';
@@ -23,15 +23,14 @@ export default function ConfirmDialog({
   const { Icon, tile } = ICONS[variant] || ICONS.delete;
 
   return (
-    <Modal isOpen={isOpen} onClose={onCancel} className="max-w-md">
+    <Modal isOpen={isOpen} onClose={onCancel} title={title} className="max-w-md">
       <div className="flex items-start gap-4">
         <span className={cn('flex h-11 w-11 shrink-0 items-center justify-center rounded-xl', tile)}>
           <Icon className="h-5 w-5" />
         </span>
-        <div className="min-w-0 flex-1">
-          <h3 className="text-base font-bold text-slate-900">{title}</h3>
-          {description && <p className="mt-1 text-sm leading-relaxed text-slate-500">{description}</p>}
-        </div>
+        {description && (
+          <p className="min-w-0 flex-1 pt-2 text-sm leading-relaxed text-slate-500">{description}</p>
+        )}
       </div>
 
       <div className="mt-6 flex justify-end gap-2">

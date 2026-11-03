@@ -1,4 +1,5 @@
-﻿import { cn } from '../../utils/cn';
+﻿import { useId } from 'react';
+import { cn } from '../../utils/cn';
 
 export default function Input({
   id,
@@ -17,10 +18,16 @@ export default function Input({
   className = '',
   ...props
 }) {
+  const generatedId = useId();
+  const inputId = id || `field-${generatedId}`;
+  const hintId = hint && !error ? `${inputId}-hint` : undefined;
+  const errorId = error ? `${inputId}-error` : undefined;
+  const describedBy = [hintId, errorId].filter(Boolean).join(' ') || undefined;
+
   return (
     <div className="space-y-1.5">
       {label && (
-        <label htmlFor={id} className="block text-sm font-medium text-slate-700">
+        <label htmlFor={inputId} className="block text-sm font-medium text-slate-700">
           {label}
           {required && (
             <span className="ml-1 text-rose-500" aria-hidden="true">
@@ -31,7 +38,7 @@ export default function Input({
       )}
       <div className="relative">
         <input
-          id={id}
+          id={inputId}
           type={type}
           value={value}
           defaultValue={defaultValue}
@@ -42,7 +49,7 @@ export default function Input({
           required={required}
           aria-invalid={error ? 'true' : 'false'}
           aria-required={required}
-          aria-describedby={hint && !error ? `${id}-hint` : undefined}
+          aria-describedby={describedBy}
           className={cn(
             'block h-11 w-full rounded-xl border bg-white px-3.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 transition-colors focus:outline-none focus:ring-4 disabled:bg-slate-50 disabled:text-slate-500',
             rightSlot && 'pr-11',
@@ -58,12 +65,12 @@ export default function Input({
         )}
       </div>
       {error ? (
-        <p className="text-xs font-medium text-rose-600" role="alert">
+        <p id={errorId} className="text-xs font-medium text-rose-600" role="alert">
           {error}
         </p>
       ) : (
         hint && (
-          <p id={id ? `${id}-hint` : undefined} className="text-xs text-slate-400">
+          <p id={hintId} className="text-xs text-slate-400">
             {hint}
           </p>
         )

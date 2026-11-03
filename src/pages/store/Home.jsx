@@ -19,13 +19,12 @@ import {
   Sparkles,
   Gamepad2,
   PackageSearch,
-  Star,
 } from 'lucide-react';
 
 const TRUST = [
   { icon: ShieldCheck, title: 'Official warranty', text: 'Genuine products with manufacturer warranty.' },
-  { icon: Truck, title: 'Fast delivery', text: 'Same-day options across Phnom Penh.' },
-  { icon: CreditCard, title: 'Secure payment', text: 'Pay safely, including cash on delivery.' },
+  { icon: Truck, title: 'Local delivery', text: 'Delivery options are confirmed at checkout.' },
+  { icon: CreditCard, title: 'Flexible payment', text: 'Pay online or choose cash on delivery.' },
   { icon: Headset, title: 'Expert support', text: 'Helpful advice before and after you buy.' },
 ];
 
@@ -91,7 +90,7 @@ export default function Home() {
         <div className="relative grid gap-12 px-6 py-14 sm:px-10 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:px-14 lg:py-20">
           <div className="animate-fade-up">
             <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs font-semibold text-brand-200 backdrop-blur">
-              <Sparkles className="h-3.5 w-3.5" /> New 2026 lineup is here
+              <Sparkles className="h-3.5 w-3.5" /> Curated for work and play
             </span>
             <h1 className="mt-5 text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl">
               Power your next
@@ -118,47 +117,76 @@ export default function Home() {
               </Link>
             </div>
 
-            <dl className="mt-10 grid max-w-lg grid-cols-3 gap-4 border-t border-white/10 pt-6">
-              {[
-                { value: '500+', label: 'Products' },
-                { value: '4.9/5', label: 'Customer rating' },
-                { value: '24h', label: 'Delivery' },
-              ].map((stat) => (
-                <div key={stat.label}>
-                  <dt className="text-2xl font-bold text-white">{stat.value}</dt>
-                  <dd className="text-xs text-slate-400">{stat.label}</dd>
-                </div>
+            <div className="mt-10 flex flex-wrap gap-2 border-t border-white/10 pt-6">
+              {['Official warranty', 'Local support', 'Secure checkout'].map((item) => (
+                <span
+                  key={item}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-slate-300"
+                >
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                  {item}
+                </span>
               ))}
-            </dl>
+            </div>
           </div>
 
-          {/* Featured showcase card */}
           <div className="relative hidden lg:block">
             <div className="absolute inset-0 -rotate-3 rounded-3xl border border-white/10 bg-white/5 backdrop-blur" />
-            <div className="relative overflow-hidden rounded-3xl border border-white/15 bg-white/10 p-4 shadow-2xl backdrop-blur-xl">
-              <ImageFallback
-                src="https://images.unsplash.com/photo-1603302576837-37561b2e2302?w=900&q=80"
-                alt="Featured gaming laptop"
-                className="aspect-[4/3] w-full rounded-2xl"
-              />
-              <div className="flex items-center justify-between px-2 pb-1 pt-4">
+            <div className="relative overflow-hidden rounded-3xl border border-white/15 bg-white/10 p-6 shadow-2xl backdrop-blur-xl">
+              <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-xs font-medium uppercase tracking-wider text-brand-200">Featured</p>
-                  <p className="text-lg font-bold text-white">Pro Gaming Laptop</p>
-                  <p className="text-sm text-slate-300">RTX graphics · 165Hz display</p>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-brand-200">Start exploring</p>
+                  <h2 className="mt-1 text-xl font-bold text-white">Popular categories</h2>
                 </div>
-                <div className="flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 text-xs font-semibold text-white">
-                  <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" /> 4.9
-                </div>
+                <Link
+                  to="/categories"
+                  className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
+                  aria-label="View all categories"
+                >
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
               </div>
-            </div>
-            <div className="absolute -bottom-5 -left-5 flex items-center gap-2 rounded-2xl border border-white/15 bg-slate-900/90 px-4 py-3 shadow-xl backdrop-blur">
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-400">
-                <ShieldCheck className="h-5 w-5" />
-              </span>
-              <div>
-                <p className="text-xs font-semibold text-white">Genuine warranty</p>
-                <p className="text-[11px] text-slate-400">Official local coverage</p>
+
+              <div className="mt-5 space-y-2">
+                {loading ? (
+                  Array.from({ length: 3 }).map((_, index) => (
+                    <div key={index} className="h-14 animate-pulse rounded-xl bg-white/10" />
+                  ))
+                ) : categories.length ? (
+                  categories.slice(0, 4).map((cat) => {
+                    const Icon = iconFor(cat.name);
+                    return (
+                      <Link
+                        key={cat.id}
+                        to={`/categories/${cat.slug}`}
+                        className="group flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 transition-colors hover:bg-white/10"
+                      >
+                        <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-500/20 text-brand-200">
+                          <Icon className="h-4 w-4" />
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-sm font-semibold text-white">{cat.name}</span>
+                          <span className="block text-[11px] text-slate-400">Browse products</span>
+                        </span>
+                        <ArrowRight className="h-4 w-4 text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-white" />
+                      </Link>
+                    );
+                  })
+                ) : (
+                  <Link
+                    to="/products"
+                    className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-4 py-4 text-sm font-semibold text-white transition-colors hover:bg-white/10"
+                  >
+                    Browse all products <ArrowRight className="h-4 w-4" />
+                  </Link>
+                )}
+              </div>
+
+              <div className="mt-5 flex items-center justify-between border-t border-white/10 pt-4 text-xs text-slate-400">
+                <span>{brands.length ? `${brands.length} brands available` : 'New products added regularly'}</span>
+                <Link to="/products" className="font-semibold text-brand-200 hover:text-white">
+                  Shop all
+                </Link>
               </div>
             </div>
           </div>
@@ -248,7 +276,7 @@ export default function Home() {
         <SectionHeading
           eyebrow="Trusted brands"
           title="Shop the names you know"
-          subtitle="Authorised retailer for the world's leading technology brands."
+          subtitle="Shop products from leading technology brands."
           to="/brands"
         />
         {loading ? (
@@ -286,24 +314,23 @@ export default function Home() {
         )}
       </section>
 
-      {/* Catalog status */}
       <section className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-sm">
         <div className="grid gap-6 p-8 sm:p-10 lg:grid-cols-[auto_1fr_auto] lg:items-center">
           <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-50 text-brand-600">
             <PackageSearch className="h-7 w-7" />
           </span>
           <div>
-            <h3 className="text-xl font-bold text-slate-900">The full catalog is coming online</h3>
+            <h3 className="text-xl font-bold text-slate-900">Browse the full catalog</h3>
             <p className="mt-1 max-w-2xl text-sm leading-relaxed text-slate-500">
-              Our product feed is being connected to the store. In the meantime, explore categories
-              and brands, or contact us for availability and personalised recommendations.
+              Filter by category or brand, compare prices and open any product for full
+              specifications. Need a recommendation? Contact our team for help choosing.
             </p>
           </div>
           <Link
-            to="/categories"
+            to="/products"
             className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
           >
-            Explore categories <ArrowRight className="h-4 w-4" />
+            Shop all products <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
       </section>

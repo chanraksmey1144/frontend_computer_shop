@@ -1,5 +1,5 @@
 ﻿import { useState, useEffect } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { getProducts } from '../../services/productService';
 import { getCategories } from '../../services/categoryService';
 import { getBrands } from '../../services/brandService';
@@ -35,12 +35,14 @@ async function getCatalogId(kind, slug) {
   return records.find((record) => record.slug === slug)?.id ?? null;
 }
 
-export default function ProductList({ initialQuery = {} } = {}) {
+export default function ProductList({ initialQuery = {}, showHeader = true } = {}) {
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [meta, setMeta] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [retry, setRetry] = useState(0);
 
   const urlQuery = Object.fromEntries(searchParams.entries());
   const query = { ...initialQuery, ...urlQuery };
@@ -92,7 +94,7 @@ export default function ProductList({ initialQuery = {} } = {}) {
     return () => {
       cancelled = true;
     };
-  }, [page, query.search, query.category, query.brand, query.status, query.sort]);
+  }, [page, query.search, query.category, query.brand, query.status, query.sort, retry]);
 
   function changeParam(key, value) {
     const next = new URLSearchParams(searchParams);
@@ -103,6 +105,10 @@ export default function ProductList({ initialQuery = {} } = {}) {
   }
 
   function clearFilters() {
+    if (Object.keys(initialQuery).length > 0) {
+      navigate('/products');
+      return;
+    }
     setSearchParams({}, { replace: true });
   }
 
@@ -110,16 +116,26 @@ export default function ProductList({ initialQuery = {} } = {}) {
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-col gap-4 border-b border-slate-200 pb-6 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-600">Catalog</p>
-          <h1 className="mt-1.5 text-3xl font-bold tracking-tight text-slate-900">All products</h1>
-          <p className="mt-1 text-sm text-slate-500">
-            {loading ? 'Loading products…' : `${total} product${total !== 1 ? 's' : ''} available`}
+      <div
+        className={`flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between ${
+          showHeader ? 'border-b border-slate-200 pb-6' : ''
+        }`}
+      >
+        {showHeader ? (
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-600">Catalog</p>
+            <h1 className="mt-1.5 text-3xl font-bold tracking-tight text-slate-900">All products</h1>
+            <p className="mt-1 text-sm text-slate-500">
+              {loading ? 'Loading products.' : `${total} product${total !== 1 ? 's' : ''} available`}
+            </p>
+          </div>
+        ) : (
+          <p className="text-sm text-slate-500">
+            {loading ? 'Loading products.' : `${total} product${total !== 1 ? 's' : ''} found`}
           </p>
-        </div>
+        )}
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 sm:ml-auto">
           <span className="hidden items-center gap-1.5 text-sm font-medium text-slate-500 sm:flex">
             <SlidersHorizontal className="h-4 w-4" /> Sort
           </span>
@@ -150,10 +166,12 @@ export default function ProductList({ initialQuery = {} } = {}) {
           </span>
           <h2 className="mt-4 text-lg font-bold text-slate-900">Unable to load products</h2>
           <p className="mx-auto mt-1 max-w-md text-sm text-slate-500">{error}</p>
-          <p className="mx-auto mt-2 max-w-md text-xs text-slate-400">
-            The <code className="rounded bg-slate-100 px-1 py-0.5">/api/products</code> endpoint is
-            not yet available on the backend.
-          </p>
+          <button
+            onClick={() => setRetry((value) => value + 1)}
+            className="mt-5 inline-flex h-10 items-center rounded-xl bg-brand-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-brand-700"
+          >
+            Try again
+          </button>
         </div>
       ) : products.length === 0 ? (
         <div className="rounded-3xl border border-slate-200 bg-white px-6 py-16 text-center shadow-sm">
@@ -192,7 +210,7 @@ export default function ProductList({ initialQuery = {} } = {}) {
 
 function ProductCard({ product }) {
   const price = product.price ?? 0;
-  const unavailable = product.status !== 'active' || product.stock === 0;
+  const unavailable = product.status !== 'active';
   const brandName = product.brand?.name || (typeof product.brand === 'string' ? product.brand : '');
   const productImages = Array.isArray(product.images) ? product.images : [];
   const imageUrl = product.image_url
@@ -237,15 +255,7 @@ function ProductCard({ product }) {
 
         <div className="mt-3 flex items-end justify-between gap-2">
           <span className="text-lg font-bold text-slate-900">{formatMoney(price)}</span>
-          {product.stock !== undefined && (
-            <span
-              className={`text-xs font-medium ${
-                product.stock > 0 ? 'text-emerald-600' : 'text-rose-600'
-              }`}
-            >
-              {product.stock > 0 ? 'In stock' : 'Out of stock'}
-            </span>
-          )}
+          <span className="text-xs font-medium text-slate-400">View details</span>
         </div>
 
         <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3">

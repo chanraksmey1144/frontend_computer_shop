@@ -1,5 +1,5 @@
 ﻿import { Link, Outlet } from 'react-router-dom';
-import { Cpu, ShieldCheck, Truck, Headset, Star } from 'lucide-react';
+import { Cpu, ShieldCheck, Truck, Headset, ArrowLeft } from 'lucide-react';
 
 const BENEFITS = [
   { icon: ShieldCheck, text: 'Genuine products with official warranty' },
@@ -10,7 +10,6 @@ const BENEFITS = [
 export default function AuthLayout({ children }) {
   return (
     <div className="grid min-h-screen bg-white lg:grid-cols-2">
-      {/* Brand panel */}
       <div className="relative hidden overflow-hidden bg-slate-950 p-12 text-white lg:flex lg:flex-col lg:justify-between">
         <img
           src="https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=1400&q=80"
@@ -36,8 +35,8 @@ export default function AuthLayout({ children }) {
             Your next upgrade starts here.
           </h2>
           <p className="mt-3 text-sm leading-relaxed text-slate-300">
-            Create an account to track orders, save addresses and get exclusive member pricing on
-            laptops, desktops and accessories.
+            Create an account to save your addresses, keep your cart synced and move through
+            checkout faster.
           </p>
           <ul className="mt-8 space-y-3">
             {BENEFITS.map(({ icon: Icon, text }) => (
@@ -52,20 +51,22 @@ export default function AuthLayout({ children }) {
         </div>
 
         <div className="relative rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur">
-          <div className="flex gap-0.5 text-amber-400">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Star key={i} className="h-4 w-4 fill-current" />
-            ))}
+          <div className="flex items-center gap-2 text-brand-300">
+            <Headset className="h-4 w-4" />
+            <p className="text-xs font-semibold uppercase tracking-wider">Need help?</p>
           </div>
-          <p className="mt-2 text-sm text-slate-200">
-            “Fast delivery and genuine products. The team helped me pick the perfect laptop for my
-            work.”
+          <p className="mt-2 text-sm leading-relaxed text-slate-300">
+            Tell us what you need and our team will help you choose the right setup.
           </p>
-          <p className="mt-3 text-xs font-medium text-slate-400">— Sokha, Phnom Penh</p>
+          <a
+            href="mailto:hello@computershop.com"
+            className="mt-3 inline-flex text-sm font-semibold text-white underline decoration-brand-400/60 underline-offset-4 transition-colors hover:text-brand-200"
+          >
+            hello@computershop.com
+          </a>
         </div>
       </div>
 
-      {/* Form panel */}
       <div className="flex flex-col">
         <div className="flex items-center justify-between px-5 py-5 lg:px-10">
           <Link to="/" className="flex items-center gap-2.5 lg:hidden">
@@ -78,9 +79,9 @@ export default function AuthLayout({ children }) {
           </Link>
           <Link
             to="/"
-            className="ml-auto text-sm font-medium text-slate-500 transition-colors hover:text-slate-900"
+            className="ml-auto inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 transition-colors hover:text-slate-900"
           >
-            ← Back to store
+            <ArrowLeft className="h-4 w-4" /> Back to store
           </Link>
         </div>
 

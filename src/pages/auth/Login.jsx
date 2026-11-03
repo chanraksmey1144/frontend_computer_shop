@@ -1,5 +1,5 @@
 ﻿import { useState } from 'react';
-import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../components/common';
 import { Button, Input } from '../../components/common';
@@ -8,13 +8,15 @@ import { googleLoginUrl } from '../../services/authService';
 export default function Login() {
   const { login, isAuthenticated, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { show } = useToast();
   const [form, setForm] = useState({ email: '', password: '' });
   const [remember, setRemember] = useState(true);
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
+  const destination = location.state?.from?.pathname || '/';
 
-  if (isAuthenticated) return <Navigate to="/" replace />;
+  if (isAuthenticated) return <Navigate to={destination} replace />;
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -23,7 +25,7 @@ export default function Login() {
     try {
       await login({ email: form.email, password: form.password, remember });
       show({ title: 'Welcome back', description: 'You have signed in successfully.', type: 'success' });
-      navigate('/');
+      navigate(destination, { replace: true });
     } catch (err) {
       if (err.response && err.response.status === 422) {
         setErrors(err.response.data.errors || {});
@@ -44,7 +46,7 @@ export default function Login() {
       <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-600">Account</p>
       <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">Welcome back</h1>
       <p className="mt-1.5 text-sm text-slate-500">
-        Sign in to manage your orders, addresses and wishlist.
+        Sign in to manage your orders, addresses and account settings.
       </p>
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-5">
@@ -62,7 +64,7 @@ export default function Login() {
           label="Password"
           type="password"
           autoComplete="current-password"
-          placeholder="••••••••"
+          placeholder="Enter your password"
           value={form.password}
           onChange={(e) => setForm({ ...form, password: e.target.value })}
           error={errors.password}

@@ -1,9 +1,9 @@
-﻿import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { getCart, updateCartItem, removeCartItem } from '../../services/cartService';
+﻿import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useCart } from '../../context/CartContext';
 import { useToast } from '../../components/common';
-import { ImageFallback } from '../../components/common';
+import { EmptyState, ImageFallback } from '../../components/common';
 import { formatMoney } from '../../utils/format';
 import {
   Minus,
@@ -14,87 +14,58 @@ import {
   ShieldCheck,
   Truck,
   ChevronRight,
+  LogIn,
 } from 'lucide-react';
 
 export default function Cart() {
   const { isAuthenticated } = useAuth();
+  const { cart, loading, updateItem, removeItem } = useCart();
   const { show } = useToast();
-  const navigate = useNavigate();
-  const [items, setItems] = useState([]);
-  const [summary, setSummary] = useState({ subtotal: 0, discount: 0, delivery_fee: 0, total: 0 });
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(new Set());
 
-  useEffect(() => {
-    loadCart();
-  }, []);
-
-  async function loadCart() {
-    setLoading(true);
-    try {
-      const res = await getCart();
-      const data = res.data.data || res.data || {};
-      setItems(data.items || []);
-      setSummary({
-        subtotal: data.subtotal ?? 0,
-        discount: data.discount ?? 0,
-        delivery_fee: data.delivery_fee ?? 0,
-        total: data.total ?? 0,
-      });
-    } catch {
-      setItems([]);
-      setSummary({ subtotal: 0, discount: 0, delivery_fee: 0, total: 0 });
-    } finally {
-      setLoading(false);
-    }
-  }
+  const items = cart.items || [];
+  const summary = {
+    subtotal: cart.subtotal ?? 0,
+    discount: cart.discount ?? 0,
+    delivery_fee: cart.delivery_fee ?? 0,
+    total: cart.total ?? 0,
+  };
 
   async function updateQuantity(itemId, delta) {
     const item = items.find((i) => i.id === itemId);
     if (!item) return;
     const next = item.quantity + delta;
     if (next <= 0) {
-      await removeItem(itemId);
+      await handleRemove(itemId);
       return;
     }
     setSaving((prev) => new Set([...prev, itemId]));
     try {
-      await updateCartItem(itemId, { quantity: next });
-      await loadCart();
+      await updateItem(itemId, { quantity: next });
     } catch (err) {
       show({ title: 'Update failed', description: err.message || 'Could not update quantity.', type: 'error' });
     } finally {
       setSaving((prev) => {
-        const n = new Set(prev);
-        n.delete(itemId);
-        return n;
+        const nextSet = new Set(prev);
+        nextSet.delete(itemId);
+        return nextSet;
       });
     }
   }
 
-  async function removeItem(itemId) {
+  async function handleRemove(itemId) {
     setSaving((prev) => new Set([...prev, itemId]));
     try {
-      await removeCartItem(itemId);
-      await loadCart();
+      await removeItem(itemId);
     } catch (err) {
       show({ title: 'Remove failed', description: err.message || 'Could not remove item.', type: 'error' });
     } finally {
       setSaving((prev) => {
-        const n = new Set(prev);
-        n.delete(itemId);
-        return n;
+        const nextSet = new Set(prev);
+        nextSet.delete(itemId);
+        return nextSet;
       });
     }
-  }
-
-  function handleCheckout() {
-    if (!isAuthenticated) {
-      show({ title: 'Login required', description: 'Please log in to place an order.', type: 'warning' });
-      navigate('/login');
-      return;
-    }
-    navigate('/checkout');
   }
 
   if (loading) {
@@ -109,22 +80,50 @@ export default function Cart() {
     );
   }
 
+  if (!isAuthenticated) {
+    return (
+      <div className="mx-auto max-w-lg">
+        <EmptyState
+          icon={LogIn}
+          title="Sign in to see your cart"
+          description="Your cart is linked to your account so it stays with you across devices."
+          action={
+            <>
+              <Link
+                to="/login"
+                className="inline-flex h-11 items-center gap-2 rounded-xl bg-brand-600 px-5 text-sm font-semibold text-white transition-colors hover:bg-brand-700"
+              >
+                Sign in <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link
+                to="/products"
+                className="inline-flex h-11 items-center rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+              >
+                Browse products
+              </Link>
+            </>
+          }
+        />
+      </div>
+    );
+  }
+
   if (items.length === 0) {
     return (
-      <div className="mx-auto max-w-lg rounded-3xl border border-slate-200 bg-white px-6 py-20 text-center shadow-sm">
-        <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-50 text-brand-600">
-          <ShoppingBag className="h-8 w-8" />
-        </span>
-        <h1 className="mt-5 text-2xl font-bold text-slate-900">Your cart is empty</h1>
-        <p className="mx-auto mt-1.5 max-w-sm text-sm text-slate-500">
-          Looks like you haven't added anything yet. Explore our latest computers and accessories.
-        </p>
-        <Link
-          to="/products"
-          className="mt-7 inline-flex h-11 items-center gap-2 rounded-xl bg-brand-600 px-5 text-sm font-semibold text-white transition-colors hover:bg-brand-700"
-        >
-          Start shopping <ArrowRight className="h-4 w-4" />
-        </Link>
+      <div className="mx-auto max-w-lg">
+        <EmptyState
+          icon={ShoppingBag}
+          title="Your cart is empty"
+          description="Looks like you have not added anything yet. Explore our latest computers and accessories."
+          action={
+            <Link
+              to="/products"
+              className="inline-flex h-11 items-center gap-2 rounded-xl bg-brand-600 px-5 text-sm font-semibold text-white transition-colors hover:bg-brand-700"
+            >
+              Start shopping <ArrowRight className="h-4 w-4" />
+            </Link>
+          }
+        />
       </div>
     );
   }
@@ -145,7 +144,6 @@ export default function Cart() {
       </div>
 
       <div className="grid items-start gap-6 lg:grid-cols-[1.6fr_1fr]">
-        {/* Items */}
         <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
           <ul className="divide-y divide-slate-100">
             {items.map((item) => (
@@ -153,7 +151,7 @@ export default function Cart() {
                 key={item.id}
                 item={item}
                 onUpdate={updateQuantity}
-                onRemove={removeItem}
+                onRemove={handleRemove}
                 saving={saving}
               />
             ))}
@@ -163,12 +161,11 @@ export default function Cart() {
               to="/products"
               className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-600 transition-colors hover:text-brand-700"
             >
-              ← Continue shopping
+              Continue shopping
             </Link>
           </div>
         </div>
 
-        {/* Summary */}
         <div className="lg:sticky lg:top-24">
           <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
             <h2 className="text-lg font-bold text-slate-900">Order summary</h2>
@@ -180,7 +177,7 @@ export default function Cart() {
               {summary.discount > 0 && (
                 <div className="flex justify-between">
                   <dt className="text-slate-500">Discount</dt>
-                  <dd className="font-medium text-emerald-600">−{formatMoney(summary.discount)}</dd>
+                  <dd className="font-medium text-emerald-600">-{formatMoney(summary.discount)}</dd>
                 </div>
               )}
               <div className="flex justify-between">
@@ -195,21 +192,20 @@ export default function Cart() {
               </div>
             </dl>
 
-            <button
-              type="button"
-              onClick={handleCheckout}
+            <Link
+              to="/checkout"
               className="mt-5 inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-brand-600 text-sm font-semibold text-white shadow-sm shadow-brand-600/20 transition-colors hover:bg-brand-700"
             >
-              {isAuthenticated ? 'Proceed to checkout' : 'Log in to checkout'}
+              Proceed to checkout
               <ArrowRight className="h-4 w-4" />
-            </button>
+            </Link>
 
             <div className="mt-4 space-y-2 border-t border-slate-100 pt-4 text-xs text-slate-500">
               <p className="flex items-center gap-2">
-                <ShieldCheck className="h-4 w-4 text-brand-600" /> Secure checkout & buyer protection
+                <ShieldCheck className="h-4 w-4 text-brand-600" /> Secure account checkout
               </p>
               <p className="flex items-center gap-2">
-                <Truck className="h-4 w-4 text-brand-600" /> Free delivery over $100 in Phnom Penh
+                <Truck className="h-4 w-4 text-brand-600" /> Delivery details confirmed at checkout
               </p>
             </div>
           </div>
@@ -247,14 +243,14 @@ function CartItemRow({ item, onUpdate, onRemove, saving }) {
             >
               {product.name || 'Product'}
             </Link>
-            <p className="mt-0.5 text-xs text-slate-400">SKU: {product.sku || '—'}</p>
+            <p className="mt-0.5 text-xs text-slate-400">SKU: {product.sku || '-'}</p>
           </div>
           <button
             type="button"
             onClick={() => onRemove(item.id)}
             disabled={busy}
             className="-mr-1 shrink-0 rounded-lg p-2 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50"
-            aria-label="Remove item"
+            aria-label={`Remove ${product.name || 'item'} from cart`}
           >
             <Trash2 className="h-4 w-4" />
           </button>

@@ -1,3 +1,4 @@
+﻿import { useEffect, useState } from 'react';
 import { User } from 'lucide-react';
 import { cn } from '../../utils/cn';
 
@@ -8,6 +9,12 @@ const SIZES = {
 };
 
 export default function Avatar({ src, alt = 'User', className = '', size = 'md' }) {
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    setFailed(false);
+  }, [src]);
+
   return (
     <span
       className={cn(
@@ -16,10 +23,10 @@ export default function Avatar({ src, alt = 'User', className = '', size = 'md' 
         className
       )}
     >
-      {src ? (
-        <img src={src} alt={alt} className="h-full w-full object-cover" />
+      {src && !failed ? (
+        <img src={src} alt={alt} className="h-full w-full object-cover" onError={() => setFailed(true)} />
       ) : (
-        <User className="h-[60%] w-[60%]" />
+        <User className="h-[60%] w-[60%]" aria-label={alt} />
       )}
     </span>
   );

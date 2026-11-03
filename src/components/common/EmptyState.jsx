@@ -1,9 +1,10 @@
-import { cn } from '../../utils/cn';
+﻿import { cn } from '../../utils/cn';
 
 const TONES = {
   neutral: 'bg-slate-100 text-slate-500',
   brand: 'bg-brand-50 text-brand-600',
   warning: 'bg-amber-50 text-amber-600',
+  danger: 'bg-rose-50 text-rose-600',
 };
 
 export default function EmptyState({
@@ -12,12 +13,16 @@ export default function EmptyState({
   description,
   action,
   tone = 'brand',
+  flush = false,
   className = '',
 }) {
   return (
     <div
       className={cn(
-        'rounded-3xl border border-slate-200/80 bg-white px-6 py-16 text-center shadow-sm',
+        'text-center',
+        flush
+          ? 'px-5 py-12'
+          : 'rounded-3xl border border-slate-200/80 bg-white px-6 py-16 shadow-sm',
         className
       )}
     >

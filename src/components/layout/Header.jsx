@@ -59,6 +59,23 @@ export default function Header() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    if (!mobileOpen) return undefined;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    function handleKeyDown(event) {
+      if (event.key === 'Escape') setMobileOpen(false);
+    }
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [mobileOpen]);
+
   const itemCount = cartItemCount ?? cart.item_count ?? (cart.items ? cart.items.length : 0);
 
   function handleSearch(e) {
@@ -86,7 +103,7 @@ export default function Header() {
         <div className="container-page flex h-9 items-center justify-between text-xs">
           <p className="flex items-center gap-1.5">
             <span className="inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400" />
-            Free delivery on orders over $100 within Phnom Penh
+            Genuine products with local warranty support
           </p>
           <div className="flex items-center gap-5">
             <span className="flex items-center gap-1.5">
@@ -108,6 +125,8 @@ export default function Header() {
             className="-ml-1 rounded-lg p-2 text-slate-600 transition-colors hover:bg-slate-100 lg:hidden"
             onClick={() => setMobileOpen(true)}
             aria-label="Open menu"
+            aria-expanded={mobileOpen}
+            aria-controls="mobile-navigation"
           >
             <Menu size={22} />
           </button>
@@ -143,7 +162,9 @@ export default function Header() {
           <form onSubmit={handleSearch} className="ml-auto hidden max-w-md flex-1 md:block">
             <div className="group relative">
               <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <label htmlFor="header-search" className="sr-only">Search products</label>
               <input
+                id="header-search"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search laptops, components..."
@@ -308,7 +329,7 @@ function MobileMenu({
   onSearch,
 }) {
   return (
-    <div className="fixed inset-0 z-50 lg:hidden">
+    <div id="mobile-navigation" className="fixed inset-0 z-50 lg:hidden">
       <button
         type="button"
         aria-label="Close menu"
@@ -338,7 +359,9 @@ function MobileMenu({
           <form onSubmit={onSearch}>
             <div className="relative">
               <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <label htmlFor="mobile-search" className="sr-only">Search products</label>
               <input
+                id="mobile-search"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search products..."
@@ -392,6 +415,8 @@ function MobileMenu({
               )}
               <Link to="/profile" onClick={onClose} className="block rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">My profile</Link>
               <Link to="/my-orders" onClick={onClose} className="block rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">My orders</Link>
+              <Link to="/addresses" onClick={onClose} className="block rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Addresses</Link>
+              <Link to="/account/settings" onClick={onClose} className="block rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Account settings</Link>
               <button
                 onClick={() => { onClose(); onLogout(); }}
                 className="mt-1 block w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-rose-600 hover:bg-rose-50"

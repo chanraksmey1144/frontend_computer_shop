@@ -3,8 +3,6 @@ import {
   LayoutDashboard,
   Package,
   Tags,
-  ShoppingCart,
-  Users,
   Settings,
   BarChart3,
   Boxes,
@@ -37,19 +35,11 @@ const GROUPS = [
   },
   {
     label: 'Sales',
-    items: [
-      { name: 'Orders', icon: ShoppingCart, to: '/admin/orders' },
-      { name: 'Coupons', icon: TicketPercent, to: '/admin/coupons' },
-      { name: 'Customers', icon: Users, to: '/admin/customers' },
-    ],
-  },
-  {
-    label: 'Insights',
-    items: [{ name: 'Reports', icon: BarChart3, to: '/admin/reports' }],
+    items: [{ name: 'Coupons', icon: TicketPercent, to: '/admin/coupons' }],
   },
   {
     label: 'System',
-    items: [{ name: 'Settings', icon: Settings, to: '/admin/settings' }],
+    items: [{ name: 'Admin account', icon: Settings, to: '/admin/settings' }],
   },
 ];
 
@@ -63,6 +53,7 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onClose }) {
 
   return (
     <aside
+      id="admin-sidebar"
       className={cn(
         'fixed inset-y-0 left-0 z-50 flex w-[264px] flex-col border-r border-white/5 bg-slate-950 text-slate-300 transition-[width,transform] duration-300',
         collapsed ? 'lg:w-[76px]' : 'lg:w-[264px]',
@@ -71,7 +62,7 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onClose }) {
     >
       {/* Brand */}
       <div className="flex h-16 items-center gap-2.5 border-b border-white/5 px-4">
-        <Link to="/admin" className="flex min-w-0 items-center gap-2.5">
+        <Link to="/admin" onClick={onClose} className="flex min-w-0 items-center gap-2.5">
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-lg shadow-brand-600/30">
             <Cpu size={20} strokeWidth={2.2} />
           </span>
@@ -116,6 +107,7 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onClose }) {
                   <Link
                     key={item.name}
                     to={item.to}
+                    onClick={onClose}
                     title={collapsed ? item.name : undefined}
                     className={cn(
                       'group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors',
@@ -147,6 +139,7 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onClose }) {
       <div className="border-t border-white/5 p-3">
         <Link
           to="/"
+          onClick={onClose}
           className={cn(
             'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-400 transition-colors hover:bg-white/5 hover:text-white',
             collapsed && 'justify-center'

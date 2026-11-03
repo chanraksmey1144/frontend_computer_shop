@@ -1,9 +1,9 @@
-﻿import { useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import { useAuth } from '../../context/AuthContext';
 import { cn } from '../../utils/cn';
-import { Menu, LogOut, Bell, Store, Settings as SettingsIcon } from 'lucide-react';
+import { Menu, LogOut, Store, Settings as SettingsIcon } from 'lucide-react';
 
 const TODAY = new Date().toLocaleDateString('en-US', {
   weekday: 'short',
@@ -19,13 +19,14 @@ function pageTitle(pathname) {
     '/admin/categories': 'Categories',
     '/admin/brands': 'Brands',
     '/admin/inventory': 'Inventory',
+    '/admin/movements': 'Stock movements',
+    '/admin/serial-numbers': 'Serial numbers',
     '/admin/warehouses': 'Warehouses',
-    '/admin/orders': 'Orders',
-    '/admin/customers': 'Customers',
-    '/admin/reports': 'Reports',
-    '/admin/settings': 'Settings',
+    '/admin/coupons': 'Coupons',
+    '/admin/settings': 'Admin account',
   };
   if (map[pathname]) return map[pathname];
+  if (pathname.startsWith('/admin/products/') && pathname.endsWith('/edit')) return 'Edit product';
   const segment = pathname.split('/').filter(Boolean).pop() || 'Dashboard';
   return segment.charAt(0).toUpperCase() + segment.slice(1);
 }
@@ -38,6 +39,27 @@ export default function AdminLayout() {
   const location = useLocation();
   const title = pageTitle(location.pathname);
   const initials = (user?.name || 'A').slice(0, 1).toUpperCase();
+
+  useEffect(() => {
+    setMobileOpen(false);
+    setUserMenuOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    if (!mobileOpen) return undefined;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    function handleKeyDown(event) {
+      if (event.key === 'Escape') setMobileOpen(false);
+    }
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [mobileOpen]);
 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-800">
@@ -70,6 +92,8 @@ export default function AdminLayout() {
               onClick={() => setMobileOpen(true)}
               className="rounded-lg p-2 text-slate-600 transition-colors hover:bg-slate-100 lg:hidden"
               aria-label="Open menu"
+              aria-expanded={mobileOpen}
+              aria-controls="admin-sidebar"
             >
               <Menu size={20} />
             </button>
@@ -91,20 +115,12 @@ export default function AdminLayout() {
             >
               <Store className="h-4 w-4" /> Store
             </Link>
-            <button
-              type="button"
-              className="relative rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"
-              aria-label="Notifications"
-            >
-              <Bell className="h-5 w-5" />
-              <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-rose-500" />
-            </button>
-
             <div className="relative">
               <button
                 onClick={() => setUserMenuOpen((o) => !o)}
                 className="flex items-center gap-2 rounded-xl p-1 pr-2 transition-colors hover:bg-slate-100"
-                aria-label="Account"
+                aria-label="Account menu"
+                aria-expanded={userMenuOpen}
               >
                 <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 to-brand-700 text-sm font-bold text-white">
                   {user?.avatar_url ? (
@@ -141,7 +157,7 @@ export default function AdminLayout() {
                       onClick={() => setUserMenuOpen(false)}
                       className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
                     >
-                      <SettingsIcon className="h-4 w-4 text-slate-400" /> Settings
+                      <SettingsIcon className="h-4 w-4 text-slate-400" /> Admin account
                     </Link>
                     <button
                       onClick={() => {
