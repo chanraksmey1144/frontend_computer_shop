@@ -15,3 +15,7 @@ export function updateAddress(id, data) {
 export function deleteAddress(id) {
   return api.delete(`/user/addresses/${id}`);
 }
+
+export function setDefaultAddress(id) {
+  return api.patch(`/user/addresses/${id}/default`);
+}

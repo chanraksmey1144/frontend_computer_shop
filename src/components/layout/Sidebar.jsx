@@ -12,6 +12,9 @@ import {
   Cpu,
   ChevronLeft,
   X,
+  ArrowLeftRight,
+  Barcode,
+  TicketPercent,
 } from 'lucide-react';
 import { cn } from '../../utils/cn';
 
@@ -27,6 +30,8 @@ const GROUPS = [
       { name: 'Categories', icon: Tags, to: '/admin/categories' },
       { name: 'Brands', icon: Boxes, to: '/admin/brands' },
       { name: 'Inventory', icon: BarChart3, to: '/admin/inventory' },
+      { name: 'Stock movements', icon: ArrowLeftRight, to: '/admin/movements' },
+      { name: 'Serial numbers', icon: Barcode, to: '/admin/serial-numbers' },
       { name: 'Warehouses', icon: Store, to: '/admin/warehouses' },
     ],
   },
@@ -34,6 +39,7 @@ const GROUPS = [
     label: 'Sales',
     items: [
       { name: 'Orders', icon: ShoppingCart, to: '/admin/orders' },
+      { name: 'Coupons', icon: TicketPercent, to: '/admin/coupons' },
       { name: 'Customers', icon: Users, to: '/admin/customers' },
     ],
   },

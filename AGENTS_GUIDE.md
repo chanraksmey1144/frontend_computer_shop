@@ -18,12 +18,17 @@ Current state (important):
 - Router, layouts, auth/cart contexts, services, and UI primitives already exist.
 - **Storefront, auth, account, and admin screens are implemented.**
 - The Laravel backend now implements **roles, users, OTP, token auth
-  (register/login/logout/user), password reset, Google OAuth, categories,
-  brands, products, product images (URL-based), product variants, warehouses,
-  and inventories**.
-- **Still not implemented in the API**: cart, orders, addresses, profile
-  update/password change, payments, and admin dashboard/orders/customers/
-  reporting endpoints.
+  (register/login/logout/user), password reset, Google OAuth, addresses,
+  categories, brands, products, product images (URL-based), product variants,
+  warehouses, inventories, inventory movements, product serial numbers,
+  carts, and coupons**.
+- **Service modules exist for every implemented API**, including the newer
+  `couponService`, `inventoryMovementService`, and `serialNumberService`.
+- **New commerce UIs are wired**: address create/edit/default, admin coupon
+  CRUD (`/admin/coupons`), stock movement history + recording
+  (`/admin/movements`), and serial number tracking (`/admin/serial-numbers`).
+- **Still not implemented in the API**: orders, profile update/password change,
+  payments, and admin dashboard/orders/customers/reporting endpoints.
 - Pages that depend on missing endpoints show honest loading/empty/error or
   "API pending" states. **Never fake success, fake totals, or mock data.**
 - Tailwind CSS v4 with a custom brand theme is active.
@@ -110,10 +115,12 @@ Frontend_Computer/
     │   │                       AccountSettings
     │   └── admin/              Dashboard, Products, ProductCreate/Edit,
     │                           ProductForm, Categories, Brands, Inventory,
-    │                           InventoryCreateModal, Warehouses, Orders,
+    │                           InventoryCreateModal, InventoryMovements,
+    │                           SerialNumbers, Warehouses, Coupons, Orders,
     │                           OrderDetail, Customers, Reports, Settings
     ├── services/               api.js + auth/product/category/brand/cart/
-    │                           order/user/inventory/warehouse/dashboard
+    │                           order/user/inventory/inventoryMovement/
+    │                           coupon/serialNumber/warehouse/dashboard
     └── utils/                  cn.js, format.js, apiResponse.js
 ```
 
@@ -239,7 +246,7 @@ Routes:
 | Auth | `/login`, `/register`, `/otp/verify`, `/forgot-password`, `/reset-password`, `/auth/google/callback` |
 | Checkout | `/checkout` (protected) |
 | Account | `/profile`, `/my-orders`, `/my-orders/:id`, `/addresses`, `/account/settings` (protected) |
-| Admin | `/admin/*`: index, `products`, `products/create`, `products/:id/edit`, `categories`, `brands`, `inventory`, `warehouses`, `orders`, `orders/:id`, `customers`, `reports`, `settings` |
+| Admin | `/admin/*`: index, `products`, `products/create`, `products/:id/edit`, `categories`, `brands`, `inventory`, `movements`, `serial-numbers`, `warehouses`, `coupons`, `orders`, `orders/:id`, `customers`, `reports`, `settings` |
 
 **Routing note:** Unknown routes redirect to `/` (storefront) or `/admin` (admin
 area). There is no global 404 layout route (a `NotFound` page component exists
@@ -293,15 +300,33 @@ yet**.
 
 `CartContext` loads `/cart` on mount and exposes `cart`, `loading`,
 `addToCart`, `updateItem`, `removeItem`, `clearCart`, `refresh`, `itemCount`,
-`cartTotal`. The `/cart` API does not exist yet, so the context silently falls
-back to an empty cart on error. `Cart` and `Checkout` pages call the cart/order
-services directly; keep both paths consistent if the cart API changes.
+`cartTotal`. The cart API is implemented behind Sanctum authentication.
+`Cart` and `Checkout` pages call the cart/order services directly; checkout
+still depends on the missing order API.
 
 `Checkout` composes customer/delivery/payment fields and calls `POST /orders`
 with a `total_amount`. That endpoint is not implemented, so order placement
 will fail until it is. Do not replace it with fake success.
 
-### 5.4 Theming and design system
+### 5.4 Addresses, coupons, and stock screens
+
+- Addresses (`/addresses`, protected): `Addresses.jsx` uses `userService`
+  (`/user/addresses`) for list/create/update/delete/set-default. The first
+  address becomes default automatically; the star button calls
+  `PATCH /user/addresses/{id}/default`.
+- Coupons (`/admin/coupons`): `Coupons.jsx` does full CRUD against `/coupons`.
+  Storefront coupon redemption is not wired because cart totals never apply
+  discounts and orders do not exist yet.
+- Stock movements (`/admin/movements`): `InventoryMovements.jsx` lists
+  `/inventory-movements` with warehouse/product/type filters and records new
+  movements. A matching inventory row must exist before a movement can be
+  recorded; the API rejects missing rows with a validation error.
+- Serial numbers (`/admin/serial-numbers`): `SerialNumbers.jsx` lists, creates,
+  edits, and deletes `/product-serial-numbers` with search and filters. Delete
+  is blocked for `sold`/`reserved` serials in both the UI and the API.
+- The sidebar groups stock screens under Catalog and coupons under Sales.
+
+### 5.5 Theming and design system
 
 `src/index.css` defines:
 
@@ -353,18 +378,41 @@ GET/POST/GET/PUT/DELETE  /products/{product}/images
 GET/POST/GET/PUT/DELETE  /products/{product}/variants
 GET/POST/GET/PUT/DELETE  /warehouses
 GET/POST/GET/PUT/DELETE  /inventories
+GET/POST/GET             /inventory-movements
+GET/POST/GET/PUT/PATCH/DELETE /product-serial-numbers
+GET/POST/GET/PUT/PATCH/DELETE /addresses           (public on backend today)
+PATCH                    /addresses/{address}/default
+GET/POST/GET/PUT/PATCH/DELETE /user/addresses      (same controller, public)
+PATCH                    /user/addresses/{address}/default
+GET/POST/GET/PUT/PATCH/DELETE /cart                 (auth:sanctum)
+POST/PATCH/DELETE        /cart/items                (auth:sanctum)
+GET/POST/GET/PUT/PATCH/DELETE /coupons              (auth:sanctum)
+POST                     /coupons/validate          (auth:sanctum)
 ```
 
 **Expected by the frontend but not implemented**:
 
 ```
 PUT  /user, POST /user/password
-GET/POST/PUT/DELETE /user/addresses
-GET/POST /cart, PATCH/DELETE /cart/items/{id}, DELETE /cart
 GET/POST /orders, GET /orders/{id}, PATCH /orders/{id}/status
 GET /admin/dashboard, /admin/orders, /admin/products, /admin/customers
 GET /admin/reports (or equivalent)
 ```
+
+Service mapping (all under `src/services/`):
+
+| Backend area | Service file | Exports |
+|--------------|--------------|---------|
+| Addresses | `userService.js` | `getAddresses`, `createAddress`, `updateAddress`, `deleteAddress`, `setDefaultAddress` |
+| Cart | `cartService.js` | `getCart`, `addToCart`, `updateCartItem`, `removeCartItem`, `clearCart` |
+| Coupons | `couponService.js` | `getCoupons`, `getCoupon`, `createCoupon`, `updateCoupon`, `deleteCoupon`, `validateCoupon` |
+| Inventory | `inventoryService.js` | `getInventory`, `createInventory`, `adjustInventory` |
+| Inventory movements | `inventoryMovementService.js` | `getInventoryMovements`, `getInventoryMovement`, `createInventoryMovement` |
+| Serial numbers | `serialNumberService.js` | `getSerialNumbers`, `getSerialNumber`, `createSerialNumber`, `updateSerialNumber`, `deleteSerialNumber` |
+
+`inventory-movements` exposes no working `update`/`delete` (the backend routes
+exist but the controller methods do not). Do not call them. Coupons and carts
+require a Bearer token; add their UI only behind `ProtectedRoute`/`AdminRoute`.
 
 When a task involves a missing endpoint: keep the graceful unavailable/error UI,
 state the missing route explicitly, and do not fabricate responses.
@@ -402,6 +450,13 @@ tables accept both plain arrays and paginator shapes; prefer
 - Product variants: `page`. Page size 10.
 - Inventories: `warehouse_id`, `product_id`, `variant_id`, `low_stock`,
   `per_page` (1–100), `page`. Default page size 10.
+- Inventory movements: `warehouse_id`, `product_id`, `movement_type`,
+  `per_page` (1–100), `page`. Default page size 10, newest first.
+- Product serial numbers: `product_id`, `warehouse_id`, `status`, `search`,
+  `per_page` (1–100), `page`. Default page size 10, newest first.
+- Coupons: `page` only. Page size 10, newest first.
+- Addresses: `page` only. Page size 10; defaults first, then newest.
+- Cart: **not paginated**; returns a custom summary object.
 - Product images: **not paginated** (plain array).
 - Roles and Users are **not** paginated.
 
@@ -480,6 +535,85 @@ reserved_quantity, reorder_level, updated_at, warehouse, product, variant }`.
 There is no `created_at` and the `available_quantity`/`is_low_stock` accessors
 are not appended, so compute availability in the UI if needed.
 
+Address:
+
+```json
+{
+  "id": 1, "user_id": 1, "recipient_name": "Jane", "phone": "012345678",
+  "province": "Phnom Penh", "district": null, "commune": null, "village": null,
+  "address_line": "123 Street", "delivery_note": null, "is_default": true,
+  "created_at": "...", "updated_at": "..."
+}
+```
+
+Cart summary (custom shape, not a raw model):
+
+```json
+{
+  "id": 1, "user_id": 1,
+  "items": [
+    {
+      "id": 10, "cart_id": 1, "product_id": 2, "variant_id": null,
+      "quantity": 2, "unit_price": 999.0,
+      "product": { "id": 2, "name": "Laptop", "sku": "LP-001", "price": 999.0, "image_url": "..." },
+      "variant": null
+    }
+  ],
+  "item_count": 2, "subtotal": 1998.0,
+  "discount": 0, "delivery_fee": 0, "total": 1998.0
+}
+```
+
+An empty/missing cart returns `id: null`, `items: []`, and zero totals. Coupon
+discounts and shipping are not applied by the backend yet.
+
+Coupon:
+
+```json
+{
+  "id": 1, "code": "SAVE10", "description": "10% off",
+  "discount_type": "percentage", "discount_value": "10.00",
+  "minimum_order_amount": "0.00", "maximum_discount_amount": null,
+  "usage_limit": null, "usage_count": 0,
+  "starts_at": null, "expires_at": null, "status": "active",
+  "created_at": "...", "updated_at": "..."
+}
+```
+
+`POST /coupons/validate` returns
+`{ coupon_code, discount_type, discount_value, order_amount, discount_amount, final_amount }`
+where the amount fields are 2-decimal strings. `usage_count` is not incremented
+by validation.
+
+InventoryMovement:
+
+```json
+{
+  "id": 1, "warehouse_id": 1, "product_id": 2, "variant_id": null,
+  "user_id": null, "movement_type": "stock_in", "quantity_change": 5,
+  "reference_type": null, "reference_id": null, "notes": null,
+  "created_at": "...", "warehouse": {}, "product": {}, "variant": null, "user": null
+}
+```
+
+Creating a movement returns
+`data: { movement, inventory: { quantity, reserved_quantity, available_quantity, reorder_level } }`.
+Valid movement types: `stock_in`, `stock_out`, `sale`, `return`, `adjustment`,
+`reservation`, `release`.
+
+ProductSerialNumber:
+
+```json
+{
+  "id": 1, "product_id": 2, "variant_id": null, "warehouse_id": 1,
+  "serial_number": "SN-0001", "status": "in_stock", "order_item_id": null,
+  "created_at": "...", "updated_at": "...", "product": {}, "variant": null, "warehouse": {}
+}
+```
+
+Valid statuses: `in_stock`, `reserved`, `sold`, `returned`, `repair`,
+`written_off`. `DELETE` returns `422` for `sold`/`reserved` serials.
+
 ### 6.4 OTP and password reset
 
 Purposes: `registration`, `login`, `password_reset`, `change_contact`.
@@ -530,42 +664,47 @@ OTP was verified first.
 
 ## 8. Known Pitfalls
 
-1. **Feature endpoints are still missing.** Storefront catalog and admin
-   catalog/inventory screens can use real APIs; cart, checkout/orders,
-   addresses, profile update/password change, and admin dashboard/orders/
+1. **Some feature endpoints are still missing.** Storefront catalog, cart,
+   addresses, and admin catalog/inventory screens can use real APIs;
+   checkout/orders, profile update/password change, and admin dashboard/orders/
    customers/reporting cannot. Do not assume a `404` means the UI is wrong.
-2. **Backend authorization is incomplete.** Tokens exist for login, but CRUD
-   routes (including users/roles) are unprotected. `AdminRoute` is a UX guard
+2. **Backend authorization is incomplete.** Tokens exist for login and guard
+   carts/coupons, but most CRUD routes (users/roles/catalog/inventory/addresses)
+   are unprotected, and coupons have no admin check. `AdminRoute` is a UX guard
    only.
-3. **Auth is partly wired.** Login, logout, current user, OTP, password reset,
+3. **New APIs are wired, but not everywhere.** Admin coupon CRUD, stock
+   movements, and serial numbers are live. Storefront coupon entry is
+   intentionally absent because `/cart` returns `discount: 0` and `/orders`
+   does not exist; do not apply coupons client-side or fake a reduced total.
+4. **Auth is partly wired.** Login, logout, current user, OTP, password reset,
    and Google work. `PUT /user` and `POST /user/password` don't. Register does
    not return a token, so the app may remain signed out after registration.
-4. **No product stock in the API.** Availability checks based on
+5. **No product stock in the API.** Availability checks based on
    `product.stock` are effectively undefined; use `status` until inventory is
    aggregated into products.
-5. **No TypeScript.** Do not add `.ts`/`.tsx` files or type-only syntax.
-6. **`AuthLayout` takes `children`** (with `<Outlet />` fallback). Auth routes
+6. **No TypeScript.** Do not add `.ts`/`.tsx` files or type-only syntax.
+7. **`AuthLayout` takes `children`** (with `<Outlet />` fallback). Auth routes
    pass children, not nested `<Route>` children — keep that pattern or migrate
    all auth routes together.
-7. **`StrictMode` double-runs effects in dev.** Write idempotent effects and use
+8. **`StrictMode` double-runs effects in dev.** Write idempotent effects and use
    cancellation flags for fetches; don't mistake it for a production bug.
-8. **Image URLs can be absolute or relative.** Use `ImageFallback`. Product
+9. **Image URLs can be absolute or relative.** Use `ImageFallback`. Product
    images are URL-only; there is no upload flow, and admin screens do not yet
    manage images/variants.
-9. **User status** is `active` / `inactive` in the API; only offer accepted
-   values.
-10. **Bundle size warning.** The single JS chunk exceeds 500 kB after
+10. **User status** is `active` / `inactive` in the API; only offer accepted
+    values.
+11. **Bundle size warning.** The single JS chunk exceeds 500 kB after
     minification. `npm run build` still succeeds. If code-splitting, start with
     admin routes via `React.lazy`/`Suspense`.
-11. **Do not export non-component values** from UI component files (lint warning).
+12. **Do not export non-component values** from UI component files (lint warning).
     Context hook + provider exports are the accepted exception.
-12. **Google callback is hash-based.** Read `window.location.hash`, scrub it
+13. **Google callback is hash-based.** Read `window.location.hash`, scrub it
     with `history.replaceState`, and never log the token. If `FRONTEND_URL` on
     the backend is wrong, the callback lands on the wrong origin.
-13. **Cart context hides backend errors.** It falls back to an empty cart when
-    `/cart` fails, so a missing endpoint looks like an empty cart. Keep that in
-    mind when debugging.
-14. **`.env` handling.** `.env` is gitignored. Never print or commit its
+14. **Cart context hides backend errors.** It falls back to an empty cart when
+    `/cart` fails, so authentication or server errors can look like an empty
+    cart. Keep that in mind when debugging.
+15. **`.env` handling.** `.env` is gitignored. Never print or commit its
     contents; backend SMTP/OAuth credentials live in the backend `.env`, not
     here.
 
@@ -586,9 +725,9 @@ OTP was verified first.
 
 ## 10. Likely Next Tasks
 
-1. Connect cart and checkout to real `/cart` and `/orders` endpoints once the
-   backend adds them; remove the silent empty-cart fallback only when the API
-   exists.
+1. Connect checkout to `/orders` when the backend adds those routes; the cart
+   endpoints are available now. Reuse saved addresses and coupon validation
+   there once order totals exist.
 2. Wire profile update and password change once `PUT /user` and
    `POST /user/password` exist (OTP flow where required).
 3. Connect admin dashboard, orders, customers, and reports to real endpoints.
@@ -596,9 +735,11 @@ OTP was verified first.
    endpoints are used (services currently provide read helpers only).
 5. Derive storefront stock/availability from inventory once the backend exposes
    an aggregate.
-6. Code-split admin routes to resolve the chunk-size warning.
-7. Add Vitest + React Testing Library if tests are requested.
-8. Add consistent document titles if requested.
+6. Coupon usage is not persisted: `usage_count` never increments (no orders),
+   so treat the usage column as informational.
+7. Code-split admin routes to resolve the chunk-size warning.
+8. Add Vitest + React Testing Library if tests are requested.
+9. Add consistent document titles if requested.
 
 ---
 

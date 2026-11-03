@@ -47,7 +47,10 @@ import ProductEdit from '../pages/admin/ProductEdit';
 import AdminCategories from '../pages/admin/Categories';
 import AdminBrands from '../pages/admin/Brands';
 import Inventory from '../pages/admin/Inventory';
+import AdminInventoryMovements from '../pages/admin/InventoryMovements';
+import AdminSerialNumbers from '../pages/admin/SerialNumbers';
 import AdminWarehouses from '../pages/admin/Warehouses';
+import AdminCoupons from '../pages/admin/Coupons';
 import AdminOrders from '../pages/admin/Orders';
 import AdminOrderDetail from '../pages/admin/OrderDetail';
 import Customers from '../pages/admin/Customers';
@@ -107,7 +110,10 @@ export default function App() {
                 <Route path="categories" element={<AdminCategories />} />
                 <Route path="brands" element={<AdminBrands />} />
                 <Route path="inventory" element={<Inventory />} />
+                <Route path="movements" element={<AdminInventoryMovements />} />
+                <Route path="serial-numbers" element={<AdminSerialNumbers />} />
                 <Route path="warehouses" element={<AdminWarehouses />} />
+                <Route path="coupons" element={<AdminCoupons />} />
                 <Route path="orders" element={<AdminOrders />} />
                 <Route path="orders/:id" element={<AdminOrderDetail />} />
                 <Route path="customers" element={<Customers />} />
