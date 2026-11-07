@@ -23,6 +23,7 @@ import BrandPage from '../pages/store/BrandPage';
 import Search from '../pages/store/Search';
 import Cart from '../pages/store/Cart';
 import Checkout from '../pages/store/Checkout';
+import PaymentResult from '../pages/store/PaymentResult';
 
 // Auth
 import Login from '../pages/auth/Login';
@@ -83,6 +84,7 @@ export default function App() {
                 <Route path="search" element={<Search />} />
                 <Route path="cart" element={<Cart />} />
                 <Route path="checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
+                <Route path="payment/result" element={<ProtectedRoute><PaymentResult /></ProtectedRoute>} />
                 <Route path="home" element={<Navigate to="/" replace />} />
 
                 {/* Account (protected) */}

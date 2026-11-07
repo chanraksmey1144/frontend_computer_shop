@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { getOrder as getOrderApi } from '../../services/orderService';
-import { Badge, ImageFallback } from '../../components/common';
+import { Badge, Button, ImageFallback } from '../../components/common';
+import { createAbaPayWayPayment } from '../../services/abaPayWayService';
 import AccountNav from '../../components/account/AccountNav';
-import { formatMoney, formatDate } from '../../utils/format';
+import { errorMessage, formatMoney, formatDate } from '../../utils/format';
 import {
   ChevronLeft,
   ChevronRight,
@@ -20,6 +21,8 @@ export default function OrderDetail() {
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [startingPayment, setStartingPayment] = useState(false);
+  const [paymentError, setPaymentError] = useState('');
 
   useEffect(() => {
     let cancelled = false;
@@ -68,7 +71,28 @@ export default function OrderDetail() {
     );
   }
 
-  const items = order.order_items || [];
+  const items = order.items || order.order_items || [];
+
+  async function handlePayOrder() {
+    if (startingPayment) return;
+    setStartingPayment(true);
+    setPaymentError('');
+    try {
+      const response = await createAbaPayWayPayment(order.id);
+      const result = response.data.data || response.data;
+      if (!result.checkout_url) throw new Error('The payment service did not return a checkout link.');
+      window.location.assign(result.checkout_url);
+    } catch (err) {
+      const existingPaymentId = err.response?.data?.data?.payment?.id;
+      if (existingPaymentId && err.response?.status === 409) {
+        window.location.assign(`/payment/result?payment_id=${existingPaymentId}`);
+        return;
+      }
+      setPaymentError(errorMessage(err, 'Unable to start ABA PayWay checkout.'));
+    } finally {
+      setStartingPayment(false);
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -102,6 +126,19 @@ export default function OrderDetail() {
       </div>
 
       <AccountNav />
+
+      {['unpaid', 'failed'].includes(order.payment_status) && order.status !== 'cancelled' && (
+        <section className="flex flex-col gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-5 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="font-bold text-amber-950">Payment required</h2>
+            <p className="mt-1 text-sm text-amber-800">Pay {formatMoney(order.total_amount || 0, order.currency || 'USD')} through ABA PayWay to continue this order.</p>
+            {paymentError && <p className="mt-2 text-sm text-rose-700" role="alert">{paymentError}</p>}
+          </div>
+          <Button onClick={handlePayOrder} loading={startingPayment} className="shrink-0">
+            <CreditCard className="h-4 w-4" /> Pay with ABA PayWay
+          </Button>
+        </section>
+      )}
 
       <div className="grid items-start gap-6 lg:grid-cols-[1.5fr_1fr]">
         <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
@@ -177,6 +214,19 @@ export default function OrderDetail() {
               <p className="whitespace-pre-wrap leading-relaxed text-slate-600">
                 {order.shipping_address || '—'}
               </p>
+              {order.delivery_latitude != null && order.delivery_longitude != null && (
+                <a
+                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${order.delivery_latitude},${order.delivery_longitude}`)}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 pt-1 font-semibold text-brand-600 hover:text-brand-700"
+                >
+                  <MapPin className="h-4 w-4" /> Open delivery pin
+                  <span className="font-normal text-slate-500">
+                    ({Number(order.delivery_latitude).toFixed(6)}, {Number(order.delivery_longitude).toFixed(6)})
+                  </span>
+                </a>
+              )}
             </div>
           </div>
 

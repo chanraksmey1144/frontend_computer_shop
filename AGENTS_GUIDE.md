@@ -244,7 +244,7 @@ Routes:
 |------|-------|
 | Storefront | `/`, `/home` -> `/`, `/products`, `/products/:id`, `/categories`, `/categories/:slug`, `/brands`, `/brands/:slug`, `/search`, `/cart` |
 | Auth | `/login`, `/register`, `/otp/verify`, `/forgot-password`, `/reset-password`, `/auth/google/callback` |
-| Checkout | `/checkout` (protected) |
+| Checkout | `/checkout`, `/payment/result` (protected) |
 | Account | `/profile`, `/my-orders`, `/my-orders/:id`, `/addresses`, `/account/settings` (protected) |
 | Admin | `/admin/*`: index, `products`, `products/create`, `products/:id/edit`, `categories`, `brands`, `inventory`, `movements`, `serial-numbers`, `warehouses`, `coupons`, `orders`, `orders/:id`, `customers`, `reports`, `settings` |
 
@@ -301,12 +301,18 @@ yet**.
 `CartContext` loads `/cart` on mount and exposes `cart`, `loading`,
 `addToCart`, `updateItem`, `removeItem`, `clearCart`, `refresh`, `itemCount`,
 `cartTotal`. The cart API is implemented behind Sanctum authentication.
-`Cart` and `Checkout` pages call the cart/order services directly; checkout
-still depends on the missing order API.
+`Cart` and `Checkout` pages call the cart/order services directly. Checkout
+loads saved addresses, creates an order from the authenticated cart, starts
+ABA PayWay with the order ID, and navigates to the short-lived hosted checkout
+URL returned by the backend. The payment result page checks status through the
+authenticated API and never trusts browser return parameters as proof of payment.
+Checkout can also request the customer's GPS position after an explicit click;
+the coordinates are stored with the order and shown as a map link. This requires
+browser location permission and HTTPS outside localhost.
 
-`Checkout` composes customer/delivery/payment fields and calls `POST /orders`
-with a `total_amount`. That endpoint is not implemented, so order placement
-will fail until it is. Do not replace it with fake success.
+The backend recalculates order totals and empties the cart in the same database
+transaction when an order is created. The client does not send a trusted total.
+ABA PayWay credentials and callback verification stay on the backend.
 
 ### 5.4 Addresses, coupons, and stock screens
 
@@ -315,8 +321,8 @@ will fail until it is. Do not replace it with fake success.
   address becomes default automatically; the star button calls
   `PATCH /user/addresses/{id}/default`.
 - Coupons (`/admin/coupons`): `Coupons.jsx` does full CRUD against `/coupons`.
-  Storefront coupon redemption is not wired because cart totals never apply
-  discounts and orders do not exist yet.
+  Storefront coupon entry is not wired into the cart; order creation can accept
+  and validate a coupon, while the server recalculates the total.
 - Stock movements (`/admin/movements`): `InventoryMovements.jsx` lists
   `/inventory-movements` with warehouse/product/type filters and records new
   movements. A matching inventory row must exist before a movement can be
@@ -380,9 +386,9 @@ GET/POST/GET/PUT/DELETE  /warehouses
 GET/POST/GET/PUT/DELETE  /inventories
 GET/POST/GET             /inventory-movements
 GET/POST/GET/PUT/PATCH/DELETE /product-serial-numbers
-GET/POST/GET/PUT/PATCH/DELETE /addresses           (public on backend today)
+GET/POST/GET/PUT/PATCH/DELETE /addresses           (auth:sanctum)
 PATCH                    /addresses/{address}/default
-GET/POST/GET/PUT/PATCH/DELETE /user/addresses      (same controller, public)
+GET/POST/GET/PUT/PATCH/DELETE /user/addresses      (auth:sanctum)
 PATCH                    /user/addresses/{address}/default
 GET/POST/GET/PUT/PATCH/DELETE /cart                 (auth:sanctum)
 POST/PATCH/DELETE        /cart/items                (auth:sanctum)
@@ -665,17 +671,18 @@ OTP was verified first.
 ## 8. Known Pitfalls
 
 1. **Some feature endpoints are still missing.** Storefront catalog, cart,
-   addresses, and admin catalog/inventory screens can use real APIs;
-   checkout/orders, profile update/password change, and admin dashboard/orders/
-   customers/reporting cannot. Do not assume a `404` means the UI is wrong.
+   addresses, checkout/orders, and ABA PayWay status can use real APIs. Profile
+   update/password change and admin dashboard/orders/customers/reporting cannot.
+   Do not assume a `404` means the UI is wrong.
 2. **Backend authorization is incomplete.** Tokens exist for login and guard
-   carts/coupons, but most CRUD routes (users/roles/catalog/inventory/addresses)
+   carts/coupons/addresses, but most CRUD routes (users/roles/catalog/inventory)
    are unprotected, and coupons have no admin check. `AdminRoute` is a UX guard
    only.
 3. **New APIs are wired, but not everywhere.** Admin coupon CRUD, stock
    movements, and serial numbers are live. Storefront coupon entry is
-   intentionally absent because `/cart` returns `discount: 0` and `/orders`
-   does not exist; do not apply coupons client-side or fake a reduced total.
+   intentionally absent. `/cart` returns `discount: 0`; the backend can
+   validate/apply a coupon during order creation, but the UI must not adjust
+   totals client-side.
 4. **Auth is partly wired.** Login, logout, current user, OTP, password reset,
    and Google work. `PUT /user` and `POST /user/password` don't. Register does
    not return a token, so the app may remain signed out after registration.
@@ -725,9 +732,8 @@ OTP was verified first.
 
 ## 10. Likely Next Tasks
 
-1. Connect checkout to `/orders` when the backend adds those routes; the cart
-   endpoints are available now. Reuse saved addresses and coupon validation
-   there once order totals exist.
+1. Wire a checkout coupon selector against the backend quote/order APIs without
+   calculating discounts in the browser.
 2. Wire profile update and password change once `PUT /user` and
    `POST /user/password` exist (OTP flow where required).
 3. Connect admin dashboard, orders, customers, and reports to real endpoints.

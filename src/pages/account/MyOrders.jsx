@@ -80,7 +80,7 @@ export default function MyOrders() {
       ) : (
         <div className="space-y-3">
           {orders.map((order) => {
-            const items = order.order_items || [];
+            const items = order.items || order.order_items || [];
             const count = items.reduce((sum, item) => sum + (item.quantity || 0), 0);
             return (
               <Link
