@@ -11,7 +11,6 @@ import { createAbaPayWayPayment } from '../../services/abaPayWayService';
 import {
   ArrowLeft,
   ArrowRight,
-  Check,
   CreditCard,
   MapPin,
   ShieldCheck,
@@ -217,9 +216,12 @@ export default function Checkout() {
       </div>
 
       {activeOrder && (
-        <div className="flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900" role="status">
-          <Check className="mt-0.5 h-5 w-5 shrink-0" />
-          <p>Order #{activeOrder.order_number || activeOrder.id} has been saved. Retry checkout to continue payment.</p>
+        <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950" role="status">
+          <CreditCard className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" />
+          <div>
+            <p className="font-semibold">Order #{activeOrder.order_number || activeOrder.id} is saved, but payment is not complete.</p>
+            <p className="mt-0.5 text-amber-800">Continue to ABA PayWay below. We’ll confirm the payment with ABA before marking your order paid.</p>
+          </div>
         </div>
       )}
 
@@ -271,7 +273,7 @@ export default function Checkout() {
             <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold text-slate-800">Delivery GPS pin <span className="font-normal text-slate-400">(optional)</span></p>
-                <p className="mt-0.5 text-xs leading-relaxed text-slate-500">Share your current position to help the courier find the delivery point. Your written address is still needed.</p>
+                <p className="mt-0.5 text-xs leading-relaxed text-slate-500">Share your current position to help the courier find the delivery point. Your written delivery address is saved separately.</p>
               </div>
               <Button type="button" variant="outline" size="sm" onClick={useCurrentLocation} loading={locating} disabled={Boolean(activeOrder)}>
                 <MapPin className="h-4 w-4" /> {deliveryLocation ? 'Update location' : 'Use my location'}
@@ -391,7 +393,7 @@ export default function Checkout() {
             {submitError && <p className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2.5 text-sm text-rose-800" role="alert">{submitError}</p>}
 
             <Button type="submit" size="lg" className="mt-5 w-full" loading={saving} disabled={addressesLoading || (!activeOrder && addressMode === 'saved' && !addressId)}>
-              <CreditCard className="h-4 w-4" /> {activeOrder ? 'Retry ABA checkout' : 'Place order and pay'}
+              <CreditCard className="h-4 w-4" /> {activeOrder ? 'Continue to secure payment' : 'Place order and pay'}
             </Button>
 
             <p className="mt-3 text-center text-xs leading-relaxed text-slate-500">The server confirms your order total before opening ABA PayWay.</p>
